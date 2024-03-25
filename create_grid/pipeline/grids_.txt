@@ -1,3 +1,0 @@
-bpass-2.2.1-bin_chabrier03-0.1,300.0 c17.03-sps
-bpass-2.2.1-bin_chabrier03-0.1,300.0 c23.01-sps-no_grains
-bpass-2.2.1-bin_chabrier03-0.1,300.0 c23.01-sps
