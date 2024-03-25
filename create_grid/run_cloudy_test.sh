@@ -1,7 +1,7 @@
 
 # run a single index
 
-index=0
+index=1
 grid_dir='/research/astrodata/highz/synthesizer/grids'
 incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.-metallicities:0.0001,0.001,0.01'
 config_file='c23.01-test'

@@ -54,7 +54,7 @@ if __name__ == "__main__":
     config_file = args.config_file
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
-    index = int(args.index)
+    index = int(args.index) - 1
 
     # define model name
     model_name = f'{incident_grid}-{config_file}'
