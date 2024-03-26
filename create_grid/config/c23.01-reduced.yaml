@@ -7,10 +7,10 @@ cloudy_version: c23.01
 reference_abundance: GalacticConcordance # the reference abundance pattern to assume
 alpha: [0.0, 0.8]  # alpha element enhancement
 abundance_scalings:
-  nitrogen_to_oxygen: [-1.0, 0.0] # scaling for Nitrogen, either float relative to Solar or string defining the in-built function to use
-  carbon_to_oxygen: [-1.0, 0.0] # scaling for Carbon, either float relative to Solar or string defining the in-built function to use
+  nitrogen_to_oxygen: [-1.5, -1.03, -0.5] # scaling for Nitrogen, either float relative to Solar or string defining the in-built function to use
+  carbon_to_oxygen: [-1.0, -0.34, 0.0] # scaling for Carbon, either float relative to Solar or string defining the in-built function to use
 depletion_model: Jenkins2009_Gunasekera2021 # the depletion model.
-depletion_scale: [0.0, 0.5] # the depletion scale factor. For linearly scaled depletion models (e.g. CloudyClassic, Gutkin2016) this is by default 1.0. For Jenkins2009 this should be 0.5 (fstar).
+depletion_scale: [0.0, 0.5, 1.0] # the depletion scale factor. For linearly scaled depletion models (e.g. CloudyClassic, Gutkin2016) this is by default 1.0. For Jenkins2009 this should be 0.5 (fstar).
 
 # GRAINS
 grains: Orion # include ISM grains
@@ -20,10 +20,10 @@ geometry: spherical
 
 # IONISATION PARAMETER 
 ionisation_parameter_model: fixed  # which ionisation parameter model to use. `ref` assumes a varying ionisation parameter at a fixed reference age and metallicity
-ionisation_parameter: [0.001, 0.01]  
+ionisation_parameter: [0.001, 0.01, 0.01]  
 
 # DENSITY
-hydrogen_density: [1.0e+2, 1.0e+3]
+hydrogen_density: [1.0e+2, 1.0e+3, 1.0e+4]
 
 # STOPPING CRITERIA
 stop_T: 500 # stopping temperature

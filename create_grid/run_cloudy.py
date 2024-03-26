@@ -113,7 +113,8 @@ if __name__ == "__main__":
     for k, v in photoionisation_parameters.items():
         if len(k.split('.')) > 1:
             if k.split('.')[0] == 'abundance_scalings':
-                kk = k.split('.')[1]
+                
+                # convert to synthesizer standard
                 photoionisation_parameters['abundance_scalings'][kk] = v
         
     print(photoionisation_parameters)
