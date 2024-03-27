@@ -1,20 +1,11 @@
-import yaml
-import os
 import shutil
-from unyt import eV
 import argparse
-import numpy as np
-import h5py
 from pathlib import Path
 from synthesizer.grid import Grid
-from synthesizer.abundances import Abundances
-from synthesizer.photoionisation import cloudy23, cloudy17
+from synthesizer.photoionisation import cloudy23
 from utils import (
     get_grid_properties,
-    apollo_submission_script,
     load_grid_params,)
-
-
 
 
 if __name__ == "__main__":
@@ -83,17 +74,15 @@ if __name__ == "__main__":
     
     # get properties of the photoionsation grid
     (
-        n_axes,
-        shape,
-        n_models,
-        mesh,
-        model_list,
-        index_list,
+        photoionisation_n_axes,
+        photoionisation_shape,
+        photoionisation_n_models,
+        photoionisation_mesh,
+        photoionisation_model_list,
+        photoionisation_index_list,
     ) = get_grid_properties(photoionisation_axes,
                             photoionisation_axes_values,
                             verbose=True)
-
-    print(f'number of photoionisation grid points: {len(model_list)}')
 
     # open the incident grid using synthesizer
     incident_grid = Grid(
@@ -106,19 +95,18 @@ if __name__ == "__main__":
     incident_axes = incident_grid.axes
     incident_axes_values = {axis: getattr(incident_grid, axis) for axis in incident_axes}
 
-    print(incident_axes)
-    print(incident_axes_values)
-
-    print(incident_grid.spectra['incident'].shape)
+    print('incident_axes', incident_axes)
+    print('incident_axes_values', incident_axes_values)
+    print('incident_axes_spectra_shape', incident_grid.spectra['incident'].shape)
 
     # get properties of the incident grid
     (
-        n_axes,
-        shape,
-        n_models,
-        mesh,
-        model_list,
-        index_list,
+        incident_n_axes,
+        incident_shape,
+        incident_n_models,
+        incident_mesh,
+        incident_model_list,
+        incident_index_list,
     ) = get_grid_properties(incident_axes,
                             incident_axes_values,
                             verbose=True)
@@ -128,14 +116,21 @@ if __name__ == "__main__":
 
     lam = incident_grid.lam
 
-    for i, (incident_params_tuple, incident_index_tuple) in enumerate(zip(model_list, index_list)):
+    for i, (incident_params_tuple, incident_index_tuple) in enumerate(zip(incident_model_list, incident_index_list)):
 
-        print(i, incident_index_tuple)
         lnu = incident_grid.spectra['incident'][incident_index_tuple[0], incident_index_tuple[1]]
 
-        print(lam.shape, lnu.shape)
-
-        shape_commands = cloudy23.ShapeCommands.table_sed(f'{i}', lam, lnu, output_dir=f"{output_directory}")
+        shape_commands = cloudy23.ShapeCommands.table_sed(
+            f'{i}',
+            lam,
+            lnu,
+            output_dir=f"{output_directory}")
 
     # copy linelist
     shutil.copyfile('linelist.dat', f'{output_directory}/linelist.dat')
+
+    print(f'number of cloudy runs per job: {incident_n_models}')
+    print(f'number of individual jobs: {photoionisation_n_models}')
+    print(f'total number of cloudy runs: {incident_n_models * photoionisation_n_models}')
+    print('-'*40)
+    print(f'qsub -t 1: {photoionisation_n_models}')
