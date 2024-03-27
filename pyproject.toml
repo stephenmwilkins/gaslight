@@ -1,0 +1,76 @@
+[project]
+name = "gaslight"
+
+# Dynamic version numbers from git
+dynamic = ["version"]
+
+# Tagline for Synthesizer
+description = "A package for modelling nebular line emission"
+
+# A longer description of Synthesizer
+readme = "README.md"
+
+# Minimum Python version
+requires-python = ">=3.8"
+
+# The licence
+license = {file = "LICENSE.md"}
+
+# Project keywords
+keywords = [
+  "galaxy",
+  "modelling",
+  "smoothed particle hydrodynamics",
+  "particles",
+  "nbody",
+  "galaxy formation",
+  "parametric",
+  "theory",
+  "sph",
+  "cosmology",
+  "galaxy evolution",
+  "survey",
+  "space telescope",
+  "SED",
+  "sed",
+  "spectral energy distribution",
+  "stellar population",
+  "synthesis",
+]
+
+# Gaslight authors
+authors = [
+  {name = "S. M. Wilkins", email = "s.wilkins@sussex.ac.uk" },
+]
+
+# Gaslight maintainers
+maintainers = [
+  {name = "S. M. Wilkins", email = "s.wilkins@sussex.ac.uk" },
+]
+
+# Dependancies
+dependencies = [
+  "setuptools",
+  "nbmake",
+  "astropy",
+  "h5py",
+  "mpmath",
+  "numpy >= 1.23",
+  "packaging",
+  "pyerfa",
+  "pyparsing",
+  "PyYAML",
+  "scipy",
+  "unyt",
+  "cmasher",
+  "dust_extinction",
+  "nbsphinx",
+  "matplotlib",
+  "spectres",
+  "tqdm",
+]
+
+
+
+
+
