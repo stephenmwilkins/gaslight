@@ -10,6 +10,8 @@ from utils import (
 
 if __name__ == "__main__":
     
+    print('-'*80)
+
     parser = argparse.ArgumentParser(
         description="Run a grid of incident cloudy models"
     )
@@ -47,6 +49,7 @@ if __name__ == "__main__":
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
 
+
     # define model name
     model_name = f'{incident_grid}-{config_file}'
 
@@ -76,7 +79,12 @@ if __name__ == "__main__":
         photoionisation_index_list,
     ) = get_grid_properties(photoionisation_axes,
                             photoionisation_axes_values,
-                            verbose=True)
+                            verbose=False)
+    print('-'*40)
+    print('photoionisation_axes', photoionisation_axes)
+    print('photoionisation_axes_values', photoionisation_axes_values)
+    print('photoionisation_shape', photoionisation_shape)
+    print('photoionisation_n_models', photoionisation_n_models)
 
     # open the incident grid using synthesizer
     incident_grid = Grid(
@@ -89,6 +97,7 @@ if __name__ == "__main__":
     incident_axes = incident_grid.axes
     incident_axes_values = {axis: getattr(incident_grid, axis) for axis in incident_axes}
 
+    print('-'*40)
     print('incident_axes', incident_axes)
     print('incident_axes_values', incident_axes_values)
     print('incident_axes_spectra_shape', incident_grid.spectra['incident'].shape)
@@ -103,7 +112,7 @@ if __name__ == "__main__":
         incident_index_list,
     ) = get_grid_properties(incident_axes,
                             incident_axes_values,
-                            verbose=True)
+                            verbose=False)
 
 
     # loop over all incident models
@@ -123,8 +132,12 @@ if __name__ == "__main__":
     # copy linelist
     shutil.copyfile('linelist.dat', f'{output_directory}/linelist.dat')
 
+    # incldue script to write (and possibly submit) job
+
+    print('-'*40)
     print(f'number of cloudy runs per job: {incident_n_models}')
     print(f'number of individual jobs: {photoionisation_n_models}')
     print(f'total number of cloudy runs: {incident_n_models * photoionisation_n_models}')
     print('-'*40)
-    print(f'qsub -t 1: {photoionisation_n_models}')
+    print(f'qsub -t 1: {photoionisation_n_models} run_cloudy.job')
+    print('-'*80)

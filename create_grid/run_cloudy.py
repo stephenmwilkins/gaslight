@@ -7,7 +7,6 @@ from synthesizer.abundances import Abundances
 from synthesizer.photoionisation import cloudy23, cloudy17
 from utils import (
     get_grid_properties,
-    apollo_submission_script,
     load_grid_params,)
 
 
@@ -69,8 +68,6 @@ if __name__ == "__main__":
     # doesn't matter about the ordering of these
     photoionisation_axes = list(photoionisation_axes_values.keys())
 
-    print(photoionisation_axes)
-
     # set cloudy version
     if fixed_parameters['cloudy_version'] == 'c17.03':
         cloudy = cloudy17
@@ -88,9 +85,6 @@ if __name__ == "__main__":
     incident_axes = incident_grid.axes
     incident_axes_values = {axis: getattr(incident_grid, axis) for axis in incident_axes}
 
-    print(incident_axes)
-    print(incident_axes_values)
-
     # get properties of the photoionsation grid
     (
         n_axes,
@@ -101,23 +95,11 @@ if __name__ == "__main__":
         index_list,
     ) = get_grid_properties(photoionisation_axes,
                             photoionisation_axes_values,
-                            verbose=True)
-
-    print(n_models)
-    print(model_list[index])
+                            verbose=False)
 
     photoionisation_parameters = dict(zip(photoionisation_axes, model_list[index]))
     
-    photoionisation_parameters['abundance_scalings'] = {}
-
-    for k, v in photoionisation_parameters.items():
-        if len(k.split('.')) > 1:
-            if k.split('.')[0] == 'abundance_scalings':
-                kk = k.split('.')[1]
-                # convert to synthesizer standard
-                photoionisation_parameters['abundance_scalings'][kk] = v
-        
-    print(photoionisation_parameters)
+    
 
     # get properties of the incident grid
     (
@@ -129,9 +111,7 @@ if __name__ == "__main__":
         index_list,
     ) = get_grid_properties(incident_axes,
                             incident_axes_values,
-                            verbose=True)
-
-    print(shape)
+                            verbose=False)
 
     temporary_output_dictionary = None
 
@@ -148,6 +128,19 @@ if __name__ == "__main__":
         parameters = (fixed_parameters | incident_parameters
                       | photoionisation_parameters)
 
+        # if any abundance parameters are not synthesizer standard convert them
+
+        # only add 'abundance_scalings' if its needed
+        if 'abundance_scalings' not in list(parameters.keys()):
+            parameters['abundance_scalings'] = {}
+
+        for k, v in parameters.items():
+            if len(k.split('.')) > 1:
+                if k.split('.')[0] == 'abundance_scalings':
+                    kk = k.split('.')[1]
+                    # convert to synthesizer standard
+                    parameters['abundance_scalings'][kk] = v
+        
         print(i, parameters)
 
         # create abundance object
