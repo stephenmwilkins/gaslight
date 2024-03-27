@@ -197,9 +197,7 @@ if __name__ == "__main__":
         line_ids, wavelengths, luminosities = cloudy23.read_linelist(index)
 
         for line_id, luminosity in zip(line_ids, luminosities):
-            temporary_output_dictionary[line_id][incident_index_tuple[0], incident_index_tuple[1]] = luminosity
-
-    print(temporary_output_dictionary[line_id])
+            temporary_output_dictionary[line_id][tuple(incident_index_tuple)] = luminosity
 
     # save the temporary file
     with open(f'{index}.pck', 'wb') as file:
