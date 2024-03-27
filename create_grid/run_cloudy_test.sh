@@ -4,7 +4,7 @@
 index=1
 grid_dir='/research/astrodata/highz/synthesizer/grids'
 incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
-config_file='c23.01-reduced'
+config_file='c23.01-full'
 output_dir='/its/home/sw376/astrodata/gaslight/cloudy'
 cloudy_dir='/research/astro/flare/software/cloudy/'
 

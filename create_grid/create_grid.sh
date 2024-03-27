@@ -2,7 +2,7 @@
 incident_grid_dir='/research/astrodata/highz/synthesizer/grids'
 grid_dir='/research/astrodata/highz/gaslight/grids'
 incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
-config_file='c23.01-reduced'
+config_file='c23.01-full'
 output_dir='/research/astrodata/highz/gaslight/cloudy'
 
 # run the setup script
