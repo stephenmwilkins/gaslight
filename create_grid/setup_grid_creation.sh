@@ -12,7 +12,7 @@ config_file='c23.01-full'
 
 # standard AGN grid
 incident_grid='agnsed-limited'
-config_file='c23.01-agn-reduced'
+config_file='c23.01-agn-limited'
 
 # run the setup script
 python setup_grid_creation.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir
