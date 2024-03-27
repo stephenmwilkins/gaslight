@@ -1,10 +1,15 @@
 
 # runs the setup script and optionally runs a single grid point
 
-
+# apollo2
 grid_dir='/research/astrodata/highz/synthesizer/grids'
 output_dir='/its/home/sw376/astrodata/gaslight/cloudy'
 cloudy_dir='/research/astro/flare/software/cloudy/'
+
+# local
+# grid_dir='/Users/sw376/Dropbox/Research/data/synthesizer/grids'
+# output_dir='/Users/sw376/Dropbox/Research/data/gaslight/cloudy'
+# cloudy_dir='/Users/sw376/Dropbox/Research/software/cloudy'
 
 # standard SPS grid
 incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'

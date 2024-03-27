@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     for i, (incident_params_tuple, incident_index_tuple) in enumerate(zip(incident_model_list, incident_index_list)):
 
-        lnu = incident_grid.spectra['incident'][incident_index_tuple[0], incident_index_tuple[1]]
+        lnu = incident_grid.spectra['incident'][tuple(incident_index_tuple)]
 
         shape_commands = cloudy23.ShapeCommands.table_sed(
             f'{i}',
