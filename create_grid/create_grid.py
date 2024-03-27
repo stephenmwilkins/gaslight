@@ -1,14 +1,10 @@
-import os
 import h5py
 import argparse
 import pickle
 import numpy as np
 from synthesizer.grid import Grid
-from synthesizer.abundances import Abundances
-from synthesizer.photoionisation import cloudy23, cloudy17
 from utils import (
     get_grid_properties,
-    apollo_submission_script,
     load_grid_params,)
 
 
@@ -22,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("-incident_grid_dir",
                         type=str,
                         required=True)
-    
+
     # path to grid directory (i.e. where incident and new grids are stored)
     parser.add_argument("-grid_dir",
                         type=str,
@@ -75,7 +71,8 @@ if __name__ == "__main__":
 
     # get incident axes
     incident_axes = incident_grid.axes
-    incident_axes_values = {axis: getattr(incident_grid, axis) for axis in incident_axes}
+    incident_axes_values = {axis: getattr(incident_grid, axis)
+                            for axis in incident_axes}
 
     print(incident_axes)
     print(incident_axes_values)
@@ -106,7 +103,7 @@ if __name__ == "__main__":
                             incident_axes_values,
                             verbose=False)
 
-    # get axes of the full grid to enable output creation 
+    # get axes of the full grid to enable output creation
 
     total_axes = incident_axes + photoionisation_axes
     total_axes_values = incident_axes_values | photoionisation_axes_values
