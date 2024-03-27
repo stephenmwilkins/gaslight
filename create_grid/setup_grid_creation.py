@@ -39,11 +39,6 @@ if __name__ == "__main__":
                         type=str,
                         required=True)
 
-    # the model index
-    parser.add_argument("-index",
-                        type=str,
-                        required=True)
-
     # parse arguments
     args = parser.parse_args()
     grid_dir = args.grid_dir
@@ -51,7 +46,6 @@ if __name__ == "__main__":
     config_file = args.config_file
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
-    index = int(args.index)
 
     # define model name
     model_name = f'{incident_grid}-{config_file}'
