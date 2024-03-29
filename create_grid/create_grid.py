@@ -69,13 +69,7 @@ if __name__ == "__main__":
         read_lines=False,
     )
 
-    # get incident axes
-    incident_axes = incident_grid.axes
-    incident_axes_values = {axis: getattr(incident_grid, axis)
-                            for axis in incident_axes}
 
-    print(incident_axes)
-    print(incident_axes_values)
 
     # get properties of the photoionsation grid
     (
@@ -89,21 +83,32 @@ if __name__ == "__main__":
                             photoionisation_axes_values,
                             verbose=False)
 
-    print(photoionisation_n_models)
+    print('photoionisation_shape', photoionisation_shape)
+
+
+    # get incident axes
+    incident_axes = incident_grid.axes
+    incident_axes_values = {axis: getattr(incident_grid, axis)
+                            for axis in incident_axes}
+
+    print(incident_axes)
+    print(incident_axes_values)
 
     # get properties of the incident grid
     (
-        n_axes,
-        shape,
-        n_models,
-        mesh,
-        model_list,
-        index_list,
+        incident_n_axes,
+        incident_shape,
+        incident_n_models,
+        incident_mesh,
+        incident_model_list,
+        incident_index_list,
     ) = get_grid_properties(incident_axes,
                             incident_axes_values,
                             verbose=False)
 
     # get axes of the full grid to enable output creation
+
+    print('incident_shape', incident_shape)
 
     total_axes = incident_axes + photoionisation_axes
     total_axes_values = incident_axes_values | photoionisation_axes_values
@@ -120,16 +125,12 @@ if __name__ == "__main__":
                             total_axes_values,
                             verbose=False)
 
-    print(total_shape)
+    print('total_shape', total_shape)
 
     # open the first pickle file to get a list of lines
     with open(f'{output_directory}/0.pck', 'rb') as file:
         out = pickle.load(file)
         line_ids = list(out.keys())
-
-    print(line_ids)
-    print(type(line_ids))
-    print(type(total_axes))
 
     # setup output arrays
     luminosity = {}
@@ -140,11 +141,16 @@ if __name__ == "__main__":
         # open pickle file
         with open(f'{output_directory}/{i}.pck', 'rb') as file:
             out = pickle.load(file)
+
+            # loop over lines
             for line_id in line_ids:
-                for i in range(out[line_id].shape[0]):
-                    for j in range(out[line_id].shape[1]):
-                        index = tuple([i, j] + list(index_))
-                        luminosity[line_id][index] = out[line_id][i, j]
+
+                # loop over incident models
+                for incident_index in incident_index_list:
+                    
+                    # full index
+                    index = tuple(list(incident_index) + list(index_))
+                    luminosity[line_id][index] = out[line_id][incident_index]
 
     # open the new grid and save results
     with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
