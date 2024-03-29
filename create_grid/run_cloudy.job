@@ -34,12 +34,12 @@ output_dir='/its/home/sw376/astrodata/gaslight/cloudy'
 cloudy_dir='/research/astro/flare/software/cloudy/'
 
 # sps
-# incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
-# config_file='c23.01-full'
+incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
+config_file='c23.01-full'
 
 # agn
-incident_grid='agnsed-limited'
-config_file='c23.01-agn-limited'
+# incident_grid='agnsed-limited'
+# config_file='c23.01-agn-limited'
 
 
 source ../venv/bin/activate

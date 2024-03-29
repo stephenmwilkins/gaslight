@@ -23,7 +23,7 @@ ionisation_parameter_model: fixed  # which ionisation parameter model to use. `r
 ionisation_parameter: [0.0001, 0.001, 0.01, 0.1]  
 
 # DENSITY
-hydrogen_density: [1.0e+1, 1.0e+2, 1.0e+3, 1.0e+4]
+hydrogen_density: [1.0e+1, 1.0e+2, 1.0e+3, 1.0e+4, 1.0e+5]
 
 # STOPPING CRITERIA
 stop_T: 500 # stopping temperature
