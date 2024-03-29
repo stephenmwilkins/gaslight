@@ -137,7 +137,7 @@ if __name__ == "__main__":
     for line_id in line_ids:
         luminosity[line_id] = np.empty(total_shape)
 
-    for i, index_ in enumerate(photoionisation_index_list):
+    for i, photoionisation_index in enumerate(photoionisation_index_list):
         # open pickle file
         with open(f'{output_directory}/{i}.pck', 'rb') as file:
             out = pickle.load(file)
@@ -149,9 +149,10 @@ if __name__ == "__main__":
                 for incident_index in incident_index_list:
                     
                     # full index
-                    print(index, incident_index)
+                    print(photoionisation_index, incident_index)
 
-                    index = tuple(list(incident_index) + list(index_))
+                    index = (tuple(list(incident_index)
+                                   + list(photoionisation_index)))
                     luminosity[line_id][index] = out[line_id][tuple(incident_index)]
 
     # open the new grid and save results
