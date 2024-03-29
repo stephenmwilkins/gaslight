@@ -149,8 +149,10 @@ if __name__ == "__main__":
                 for incident_index in incident_index_list:
                     
                     # full index
+                    print(index, incident_index)
+
                     index = tuple(list(incident_index) + list(index_))
-                    luminosity[line_id][index] = out[line_id][incident_index]
+                    luminosity[line_id][index] = out[line_id][tuple(incident_index)]
 
     # open the new grid and save results
     with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
