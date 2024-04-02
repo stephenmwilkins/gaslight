@@ -149,7 +149,7 @@ if __name__ == "__main__":
                 for incident_index in incident_index_list:
                     
                     # full index
-                    print(photoionisation_index, incident_index)
+                    # print(photoionisation_index, incident_index)
 
                     index = (tuple(list(incident_index)
                                    + list(photoionisation_index)))
