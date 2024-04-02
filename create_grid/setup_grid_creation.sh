@@ -26,19 +26,20 @@ config_files=( "c23.01-agn-nlr" "c23.01-agn-blr" )
 
 for i in "${!incident_grids[@]}"; do
 
-    incident_grid=incident_grids[i]
-    config_file=config_files[i]
-    echo $incident_grid $config_file
+    incident_grid=${incident_grids[$i]}
+    config_file=${config_files[$i]}
+    # run the setup script
+    python setup_grid_creation.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -machine=$machine
+
+    # # now run a single grid point
+    # index=1
+    # python run_cloudy.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -index=$index
 
 done
 
 
-# # run the setup script
-# python setup_grid_creation.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -machine=$machine
 
-# index=1
 
-# # now run a single grid point
-# python run_cloudy.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -index=$index
+
 
 
