@@ -5,7 +5,8 @@ from synthesizer.grid import Grid
 from synthesizer.photoionisation import cloudy23
 from utils import (
     get_grid_properties,
-    load_grid_params,)
+    load_grid_params,
+    apollo2_submission_script,)
 
 
 if __name__ == "__main__":
@@ -40,6 +41,12 @@ if __name__ == "__main__":
     parser.add_argument("-cloudy_dir",
                         type=str,
                         required=True)
+    
+    # the machine to write the job script for
+    # this could be replaced by the job scheduler?
+    parser.add_argument("-machine",
+                        type=str,
+                        required=True)
 
     # parse arguments
     args = parser.parse_args()
@@ -48,6 +55,7 @@ if __name__ == "__main__":
     config_file = args.config_file
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
+    machine = args.machine
 
 
     # define model name
@@ -138,6 +146,22 @@ if __name__ == "__main__":
     print(f'number of cloudy runs per job: {incident_n_models}')
     print(f'number of individual jobs: {photoionisation_n_models}')
     print(f'total number of cloudy runs: {incident_n_models * photoionisation_n_models}')
-    print('-'*40)
-    print(f'qsub -t 1: {photoionisation_n_models} run_cloudy.job')
-    print('-'*80)
+
+
+
+    if machine == 'apollo2':
+
+        # create job script
+        apollo2_submission_script(grid_dir,
+                                  output_dir,
+                                  cloudy_dir,
+                                  incident_grid,
+                                  config_file)
+
+        # print command used to submit hob
+        print('-'*40)
+        print(f'qsub -t 1: {photoionisation_n_models} {incident_grid}-{config_file}.job')
+        print('-'*80)
+
+
+

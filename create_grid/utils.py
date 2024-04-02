@@ -1,6 +1,7 @@
 import numpy as np
 import yaml
 
+
 def get_grid_properties(axes, axes_values, verbose=False):
     """
     Get the properties of the grid including the dimensions etc.
@@ -99,31 +100,19 @@ def load_grid_params(param_file="c23.01-test",
     return fixed_params, grid_params
 
 
-def apollo_submission_script(n, grid_data_dir, cloudy_path, cloudy_version):
+def apollo2_submission_script(grid_dir,
+                             output_dir,
+                             cloudy_dir,
+                             incident_grid,
+                             config_file):
     """
     Create an Apollo SGE submission script.
 
-    Parameters
-    ----------
-    n : int
-        Number of models to run, sets size of array job.
-    synthesizer_data_dir : str
-        where to write the submission script
-    cloudy : str
-        bash executable for CLOUDY
+    Arguments:
 
-    Returns
-    -------
-    None
+    Returns:
+        None
     """
-
-    # cloudy executable
-    cloudy = f"{cloudy_path}/{cloudy_version}/source/cloudy.exe"
-
-    print(cloudy)
-
-    # cloudy data dir
-    cloudy_data_path = f'"{cloudy_path}/{cloudy_version}/data/:./"'
 
     apollo_job_script = f"""
 ######################################################################
@@ -156,20 +145,16 @@ def apollo_submission_script(n, grid_data_dir, cloudy_path, cloudy_version):
 # needs to be copied, and then execute the program
 ######################################################################
 
-# set cloudy data path
-export CLOUDY_DATA_PATH={cloudy_data_path}
+grid_dir='{grid_dir}'
+output_dir='{output_dir}'
+cloudy_dir='{cloudy_dir}'
+incident_grid='{incident_grid}'
+config_file='{config_file}'
 
-{cloudy} -r $SGE_TASK_ID
+source ../venv/bin/activate
+python run_cloudy.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -index=$SGE_TASK_ID
 """
 
-    open(f"{grid_data_dir}/run_grid.job", "w").write(apollo_job_script)
-    print(grid_data_dir)
+    # save job script
+    open(f"{incident_grid}-{config_file}.job", "w").write(apollo_job_script)
 
-    # define the qsub command
-    qsub = f"qsub -t 1:{n} -q smp.q -pe openmp 2 run_grid.job "
-    print(qsub)
-
-    # create a script to execute the qsub command
-    open(f"{grid_data_dir}/run.sh", "w").write(qsub)
-
-    return
