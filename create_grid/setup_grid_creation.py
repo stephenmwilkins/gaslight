@@ -51,7 +51,7 @@ if __name__ == "__main__":
     # parse arguments
     args = parser.parse_args()
     grid_dir = args.grid_dir
-    incident_grid = args.incident_grid
+    incident_grid_name = args.incident_grid
     config_file = args.config_file
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
 
     # define model name
-    model_name = f'{incident_grid}-{config_file}'
+    model_name = f'{incident_grid_name}-{config_file}'
 
     # define output directory
     output_directory = f'{output_dir}/{model_name}'
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     # open the incident grid using synthesizer
     incident_grid = Grid(
-        incident_grid,
+        incident_grid_name,
         grid_dir=grid_dir,
         read_lines=False,
     )
@@ -155,12 +155,12 @@ if __name__ == "__main__":
         apollo2_submission_script(grid_dir,
                                   output_dir,
                                   cloudy_dir,
-                                  incident_grid,
+                                  incident_grid_name,
                                   config_file)
 
         # print command used to submit hob
         print('-'*40)
-        print(f'qsub -t 1: {photoionisation_n_models} {incident_grid}-{config_file}.job')
+        print(f'qsub -t 1: {photoionisation_n_models} {incident_grid_name}-{config_file}.job')
         print('-'*80)
 
 
