@@ -17,11 +17,24 @@ incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
 config_file='c23.01-full'
 
 # standard AGN grid
-incident_grid='agnsed-isotropic'
-config_file='c23.01-agn-nlr'
+# incident_grid=
+# config_file=
 
-# run the setup script
-python setup_grid_creation.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -machine=$machine
+
+incident_grids=( "agnsed-isotropic" "agnsed-isotropic" )
+config_files=( "c23.01-agn-nlr" "c23.01-agn-blr" )
+
+for i in "${!incident_grids[@]}"; do
+
+    incident_grid=incident_grids[i]
+    config_file=config_files[i]
+    echo $incident_grid $config_file
+
+done
+
+
+# # run the setup script
+# python setup_grid_creation.py -grid_dir=$grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir -cloudy_dir=$cloudy_dir -machine=$machine
 
 # index=1
 

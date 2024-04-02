@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
         # print command used to submit hob
         print('-'*40)
-        print(f'qsub -t 1: {photoionisation_n_models} {incident_grid_name}-{config_file}.job')
+        print(f'qsub -t 1:{photoionisation_n_models} {incident_grid_name}-{config_file}.job')
         print('-'*80)
 
 
