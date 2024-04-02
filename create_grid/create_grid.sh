@@ -7,8 +7,8 @@ incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
 config_file='c23.01-full'
 
 # agn
-incident_grid='agnsed-limited'
-config_file='c23.01-agn-limited'
+# incident_grid='agnsed-limited'
+# config_file='c23.01-agn-limited'
 
 
 # run the setup script
