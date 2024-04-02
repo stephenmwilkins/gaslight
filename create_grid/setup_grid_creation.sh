@@ -17,7 +17,7 @@ incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
 config_file='c23.01-full'
 
 # standard AGN grid
-incident_grid='agnsed-isotropic.hdf5'
+incident_grid='agnsed-isotropic'
 config_file='c23.01-agn-nlr'
 
 # run the setup script
