@@ -3,16 +3,22 @@ grid_dir='/research/astrodata/highz/gaslight/grids'
 output_dir='/research/astrodata/highz/gaslight/cloudy'
 
 # sps
-incident_grid='bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.'
-config_file='c23.01-full'
+incident_grids=('bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.')
+config_files=('c23.01-full')
 
-# agn
-# incident_grid='agnsed-limited'
-# config_file='c23.01-agn-limited'
+# standard AGN grid
+incident_grids=( "agnsed-isotropic" "agnsed-isotropic" )
+config_files=( "c23.01-agn-nlr" "c23.01-agn-blr" )
 
+for i in "${!incident_grids[@]}"; do
 
-# run the setup script
-python create_grid.py -grid_dir=$grid_dir -incident_grid_dir=$incident_grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir
+    incident_grid=${incident_grids[$i]}
+    config_file=${config_files[$i]}
+    # run the setup script
+    python create_grid.py -grid_dir=$grid_dir -incident_grid_dir=$incident_grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir
+
+done
+
 
 
 
