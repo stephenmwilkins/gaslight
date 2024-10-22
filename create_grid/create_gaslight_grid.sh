@@ -15,7 +15,7 @@ for i in "${!incident_grids[@]}"; do
     incident_grid=${incident_grids[$i]}
     config_file=${config_files[$i]}
     # run the setup script
-    python create_grid.py -grid_dir=$grid_dir -incident_grid_dir=$incident_grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir
+    python create_gaslight_grid.py -grid_dir=$grid_dir -incident_grid_dir=$incident_grid_dir -incident_grid=$incident_grid -config_file=$config_file -output_dir=$output_dir
 
 done
 
