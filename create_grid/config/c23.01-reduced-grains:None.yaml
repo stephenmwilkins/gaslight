@@ -13,10 +13,10 @@ depletion_model: Jenkins2009_Gunasekera2021 # the depletion model.
 depletion_scale: [0.0, 0.5, 1.0] # the depletion scale factor. For linearly scaled depletion models (e.g. CloudyClassic, Gutkin2016) this is by default 1.0. For Jenkins2009 this should be 0.5 (fstar).
 
 # GRAINS
-grains: None # include ISM grains
+grains:
 
 # GEOMETRY
-geometry: spherical
+geometry: planeparallel
 
 # IONISATION PARAMETER 
 ionisation_parameter_model: fixed  # which ionisation parameter model to use. `ref` assumes a varying ionisation parameter at a fixed reference age and metallicity
