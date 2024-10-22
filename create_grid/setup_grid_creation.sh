@@ -18,7 +18,7 @@ machine='apollo2'
 
 # standard AGN grid
 incident_grids=( "qsosed-isotropic-limited" )
-config_files=( "c23.01-agn-test" )
+config_files=( "c23.01-agn" )
 
 for i in "${!incident_grids[@]}"; do
 
