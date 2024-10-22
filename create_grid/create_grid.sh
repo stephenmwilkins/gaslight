@@ -3,12 +3,12 @@ grid_dir='/research/astrodata/highz/gaslight/grids'
 output_dir='/research/astrodata/highz/gaslight/cloudy'
 
 # sps
-incident_grids=('bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.')
-config_files=('c23.01-full')
+# incident_grids=('bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.')
+# config_files=('c23.01-full')
 
 # standard AGN grid
-incident_grids=( "agnsed-isotropic" "agnsed-isotropic" )
-config_files=( "c23.01-agn-nlr" "c23.01-agn-blr" )
+incident_grids=( "qsosed-isotropic" )
+config_files=( "c23.01-agn" )
 
 for i in "${!incident_grids[@]}"; do
 

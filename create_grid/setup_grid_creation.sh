@@ -13,8 +13,8 @@ machine='apollo2'
 # cloudy_dir='/Users/sw376/Dropbox/Research/software/cloudy'
 
 # standard SPS grid
-incident_grids=("bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.")
-config_file=("c23.01-full")
+# incident_grids=("bpass-2.2.1-bin_chabrier03-0.1,300.0-ages:6.,7.,8.")
+# config_file=("c23.01-full")
 
 # standard AGN grid
 incident_grids=( "agnsed-isotropic" "agnsed-isotropic" )

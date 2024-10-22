@@ -188,7 +188,9 @@ if __name__ == "__main__":
             temporary_output_dictionary = {}
 
             # read in lines and use line id to set up arrays
-            line_ids, wavelengths, luminosities = cloudy23.read_linelist(index)
+            line_ids, wavelengths, luminosities = cloudy23.read_linelist(
+                index,
+                extension='emergent_elin')
 
             for line_id in line_ids:
                 temporary_output_dictionary[line_id] = np.empty(shape)
