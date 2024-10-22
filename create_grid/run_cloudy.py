@@ -12,6 +12,16 @@ from utils import (
 
 if __name__ == "__main__":
 
+    """
+    Runs a single point in the photoionisation parameter grid. For that grid
+    point the code runs every available incident spectra in serial. This
+    creates a temporary file which are later used by create_grid.py to
+    create the gaslight grid.
+
+    setup_grid_creation.py creates a batch job script to run all points on the
+    photoionisation grid.
+    """
+
     parser = argparse.ArgumentParser(
         description="Run a grid of incident cloudy models"
     )
@@ -98,8 +108,6 @@ if __name__ == "__main__":
                             verbose=False)
 
     photoionisation_parameters = dict(zip(photoionisation_axes, model_list[index]))
-    
-    
 
     # get properties of the incident grid
     (
@@ -173,11 +181,15 @@ if __name__ == "__main__":
         cloudy_executable = f'{cloudy_dir}/c23.01/source/cloudy.exe'
 
         # set CLOUDY_DATA_PATH environment variable
+        # NOT SURE WHY THIS ISN'T OUTSIDE THE LOOP
         os.environ['CLOUDY_DATA_PATH'] = f'{cloudy_dir}/c23.01/data/:./'
 
+        # change directory to the output directory
+        # NOT SURE WHY THIS ISN'T OUTSIDE THE LOOP
         os.chdir(output_directory)
         print(os.getcwd())
 
+        # run the cloudy job
         command = f'{cloudy_executable} -r {index}'
         print(command)
         os.system(command)
@@ -196,7 +208,9 @@ if __name__ == "__main__":
                 temporary_output_dictionary[line_id] = np.empty(shape)
 
         # read in lines and use line id to set up arrays
-        line_ids, wavelengths, luminosities = cloudy23.read_linelist(index)
+        line_ids, wavelengths, luminosities = cloudy23.read_linelist(
+            index,
+            extension='emergent_elin')
 
         for line_id, luminosity in zip(line_ids, luminosities):
             temporary_output_dictionary[line_id][tuple(incident_index_tuple)] = luminosity
