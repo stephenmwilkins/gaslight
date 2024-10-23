@@ -94,23 +94,25 @@ if __name__ == "__main__":
     print('photoionisation_shape', photoionisation_shape)
     print('photoionisation_n_models', photoionisation_n_models)
 
-    # open the incident grid using synthesizer
+    # Open the incident grid using synthesizer.
     incident_grid = Grid(
         incident_grid_name,
         grid_dir=grid_dir,
         read_lines=False,
     )
 
-    # get incident axes
+    # Get incident axes.
     incident_axes = incident_grid.axes
-    incident_axes_values = {axis: getattr(incident_grid, axis) for axis in incident_axes}
+    incident_axes_values = {axis: getattr(incident_grid, axis) 
+                            for axis in incident_axes}
 
+    # Print information about the incident grid,
     print('-'*40)
     print('incident_axes', incident_axes)
     print('incident_axes_values', incident_axes_values)
     print('incident_axes_spectra_shape', incident_grid.spectra['incident'].shape)
 
-    # get properties of the incident grid
+    # Get properties of the incident grid
     (
         incident_n_axes,
         incident_shape,
@@ -122,33 +124,33 @@ if __name__ == "__main__":
                             incident_axes_values,
                             verbose=False)
 
-
-    # loop over all incident models
-
+    # Loop over all incident models, extract the spectral energy distribtions,
+    # convert to the cloudy format, and save in the cloudy folder.
     lam = incident_grid.lam
 
-    for i, (incident_params_tuple, incident_index_tuple) in enumerate(zip(incident_model_list, incident_index_list)):
+    for i, (incident_params_tuple, incident_index_tuple) in enumerate(zip(
+        incident_model_list, incident_index_list)):
 
+        # Extract incident SED from the grid.
         lnu = incident_grid.spectra['incident'][tuple(incident_index_tuple)]
 
+        # Convert and save.
         shape_commands = cloudy23.ShapeCommands.table_sed(
             f'{i}',
             lam,
             lnu,
             output_dir=f"{output_directory}")
 
-    # copy linelist
+    # Copy linelist
     shutil.copyfile('linelist.dat', f'{output_directory}/linelist.dat')
 
     # incldue script to write (and possibly submit) job
-
     print('-'*40)
     print(f'number of cloudy runs per job: {incident_n_models}')
     print(f'number of individual jobs: {photoionisation_n_models}')
     print(f'total number of cloudy runs: {incident_n_models * photoionisation_n_models}')
 
-
-
+    # Create machine specific job script and print relevant command.
     if machine == 'apollo2':
 
         # create job script

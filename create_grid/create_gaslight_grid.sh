@@ -8,7 +8,7 @@ output_dir='/research/astrodata/highz/gaslight/cloudy'
 
 # standard AGN grid
 incident_grids=( "qsosed-isotropic-limited" )
-config_files=( "c23.01-agn" )
+config_files=( "agn-c23.01-v1" )
 
 for i in "${!incident_grids[@]}"; do
 
