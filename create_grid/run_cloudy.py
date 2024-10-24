@@ -219,7 +219,7 @@ if __name__ == "__main__":
         if normalise:
 
             # read synthesizer incident spectra to determine the normalisation to apply
-            lam, lnu = np.load(f'{index}.ssed')
+            lam, lnu = np.load(f'{index}.ssed.npy')
             synthesizer_incident_sed = Sed(lam=lam*Angstrom, lnu=lnu*erg/s/Hz)
 
             # read the cloudy output continuum file containing the spectra
@@ -237,8 +237,6 @@ if __name__ == "__main__":
         else:
 
             normalisation = 1.0
-
-
 
         # read in lines and use line id to set up arrays
         line_ids, wavelengths, luminosities = cloudy23.read_linelist(
