@@ -72,7 +72,7 @@ if __name__ == "__main__":
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
     index = int(args.index) - 1  # convert to python indexing
-    normalise = parser.normalise
+    normalise = args.normalise
 
     # define model name
     model_name = f'{incident_grid}-{config_file}'
