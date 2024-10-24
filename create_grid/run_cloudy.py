@@ -198,6 +198,10 @@ if __name__ == "__main__":
         os.chdir(output_directory)
         print(os.getcwd())
 
+
+        
+
+
         # run the cloudy job
         command = f'{cloudy_executable} -r {index}'
         print(command)
@@ -222,12 +226,16 @@ if __name__ == "__main__":
             lam, lnu = np.load(f'{index}.ssed.npy')
             synthesizer_incident_sed = Sed(lam=lam*Angstrom, lnu=lnu*erg/s/Hz)
 
+            # # Read first spectra from the first grid point to get length and
+            # # wavelength grid.
+            # lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
+
             # read the cloudy output continuum file containing the spectra
             spec_dict = cloudy.read_continuum(index, return_dict=True)
 
             # create synthesizer Sed object
             cloudy_incident_sed = Sed(
-                lam=spec_dict["wavelength"],
+                lam=spec_dict["lam"],
                 lnu=spec_dict["incident"])
 
             # calcualte normalisation
