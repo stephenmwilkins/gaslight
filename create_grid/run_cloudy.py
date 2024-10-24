@@ -2,7 +2,9 @@ import os
 import argparse
 import pickle
 import numpy as np
+from unyt import erg, s, Hz, Angstrom
 from synthesizer.grid import Grid
+from synthesizer.sed import Sed
 from synthesizer.abundances import Abundances
 from synthesizer.photoionisation import cloudy23, cloudy17
 from utils import (
@@ -56,6 +58,12 @@ if __name__ == "__main__":
                         type=str,
                         required=True)
 
+    # the model index
+    parser.add_argument("-normalise",
+                        type=str,
+                        default=True,
+                        required=False)
+
     # parse arguments
     args = parser.parse_args()
     grid_dir = args.grid_dir
@@ -63,7 +71,8 @@ if __name__ == "__main__":
     config_file = args.config_file
     cloudy_dir = args.cloudy_dir
     output_dir = args.output_dir
-    index = int(args.index) - 1
+    index = int(args.index) - 1  # convert to python indexing
+    normalise = parser.normalise
 
     # define model name
     model_name = f'{incident_grid}-{config_file}'
@@ -178,11 +187,11 @@ if __name__ == "__main__":
         )
 
         input_file = f"{output_directory}/{index}.in"
-        cloudy_executable = f'{cloudy_dir}/c23.01/source/cloudy.exe'
+        cloudy_executable = f'{cloudy_dir}/{fixed_parameters["cloudy_version"]}/source/cloudy.exe'
 
         # set CLOUDY_DATA_PATH environment variable
         # NOT SURE WHY THIS ISN'T OUTSIDE THE LOOP
-        os.environ['CLOUDY_DATA_PATH'] = f'{cloudy_dir}/c23.01/data/:./'
+        os.environ['CLOUDY_DATA_PATH'] = f'{cloudy_dir}/{fixed_parameters["cloudy_version"]}/data/:./'
 
         # change directory to the output directory
         # NOT SURE WHY THIS ISN'T OUTSIDE THE LOOP
@@ -200,12 +209,36 @@ if __name__ == "__main__":
             temporary_output_dictionary = {}
 
             # read in lines and use line id to set up arrays
-            line_ids, wavelengths, luminosities = cloudy23.read_linelist(
+            line_ids, wavelengths, luminosities = cloudy.read_linelist(
                 index,
                 extension='emergent_elin')
 
             for line_id in line_ids:
                 temporary_output_dictionary[line_id] = np.empty(shape)
+
+        if normalise:
+
+            # read synthesizer incident spectra to determine the normalisation to apply
+            lam, lnu = np.load(f'{index}.ssed')
+            synthesizer_incident_sed = Sed(lam=lam*Angstrom, lnu=lnu*erg/s/Hz)
+
+            # read the cloudy output continuum file containing the spectra
+            spec_dict = cloudy.read_continuum(index, return_dict=True)
+
+            # create synthesizer Sed object
+            cloudy_incident_sed = Sed(
+                lam=spec_dict["wavelength"],
+                lnu=spec_dict["incident"])
+
+            # calcualte normalisation
+            normalisation = (cloudy_incident_sed.bolometric_luminosity /
+                synthesizer_incident_sed.bolometric_luminosity)
+
+        else:
+
+            normalisation = 1.0
+
+
 
         # read in lines and use line id to set up arrays
         line_ids, wavelengths, luminosities = cloudy23.read_linelist(
@@ -213,7 +246,7 @@ if __name__ == "__main__":
             extension='emergent_elin')
 
         for line_id, luminosity in zip(line_ids, luminosities):
-            temporary_output_dictionary[line_id][tuple(incident_index_tuple)] = luminosity
+            temporary_output_dictionary[line_id][tuple(incident_index_tuple)] = luminosity * normalisation
 
     # save the temporary file
     with open(f'{index}.pck', 'wb') as file:

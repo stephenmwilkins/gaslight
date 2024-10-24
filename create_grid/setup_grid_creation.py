@@ -1,3 +1,4 @@
+import numpy as np
 import shutil
 import argparse
 from pathlib import Path
@@ -134,7 +135,10 @@ if __name__ == "__main__":
         # Extract incident SED from the grid.
         lnu = incident_grid.spectra['incident'][tuple(incident_index_tuple)]
 
-        # Convert and save.
+        # Save incident SED
+        np.save(f"{output_directory}/{i}.ssed", np.array([lam, lnu]))
+
+        # Convert incided SED to cloudy format and save.
         shape_commands = cloudy23.ShapeCommands.table_sed(
             f'{i}',
             lam,
