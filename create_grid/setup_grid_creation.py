@@ -154,8 +154,13 @@ if __name__ == "__main__":
     print(f'number of individual jobs: {photoionisation_n_models}')
     print(f'total number of cloudy runs: {incident_n_models * photoionisation_n_models}')
 
+    
+
     # Create machine specific job script and print relevant command.
     if machine == 'apollo2':
+
+        # job scripts don't like colons in the file name
+        config_file = config_file.replace(':', '')
 
         # create job script
         apollo2_submission_script(grid_dir,
