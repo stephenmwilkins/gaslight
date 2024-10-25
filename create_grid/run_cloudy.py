@@ -223,7 +223,7 @@ if __name__ == "__main__":
         if normalise:
 
             # read synthesizer incident spectra to determine the normalisation to apply
-            lam, lnu = np.load(f'{index}.ssed.npy')
+            lam, lnu = np.load(f'{i}.ssed.npy')
             synthesizer_incident_sed = Sed(lam=lam*Angstrom, lnu=lnu*erg/s/Hz)
 
             # # Read first spectra from the first grid point to get length and
@@ -231,7 +231,7 @@ if __name__ == "__main__":
             # lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
 
             # read the cloudy output continuum file containing the spectra
-            spec_dict = cloudy.read_continuum(index, return_dict=True)
+            spec_dict = cloudy.read_continuum(i, return_dict=True)
 
             # create synthesizer Sed object
             cloudy_incident_sed = Sed(
