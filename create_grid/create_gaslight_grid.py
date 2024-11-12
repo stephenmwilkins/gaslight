@@ -182,8 +182,10 @@ if __name__ == "__main__":
     if len(failed_grid_points) > 0:
         print(failed_grid_points)
 
+        failed_grid_points_string_list = list(map(lambda x: f'{x}\n', failed_grid_points))
+
         # Save this list and generate a new run command
-        open(f'{model_name}.failed_models', 'w').writelines(failed_grid_points)
+        open(f'{model_name}.failed_models', 'w').writelines(failed_grid_points_string_list)
 
     # open the new grid and save results
     with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
