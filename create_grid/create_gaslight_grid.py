@@ -183,21 +183,20 @@ if __name__ == "__main__":
         print(failed_grid_points)
 
         # Save this list and generate a new run command
-        open(f'{model_name}.failed_models').writelines(failed_grid_points)
+        open(f'{model_name}.failed_models', 'w').writelines(failed_grid_points)
 
-    # open the new grid and save results if there are not failures
-    if len(failed_grid_points) == 0:
-        with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
+    # open the new grid and save results
+    with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
 
-            # save a list of the axes in the correct order
-            hf.attrs['axes'] = total_axes
+        # save a list of the axes in the correct order
+        hf.attrs['axes'] = total_axes
 
-            # save the values of the axes
-            for k, v in total_axes_values.items():
-                hf[f'axes/{k}'] = v
+        # save the values of the axes
+        for k, v in total_axes_values.items():
+            hf[f'axes/{k}'] = v
 
-            for line_id in line_ids:
-                hf[f'luminosity/{line_id}'] = luminosity[line_id]
+        for line_id in line_ids:
+            hf[f'luminosity/{line_id}'] = luminosity[line_id]
 
-            # print
-            hf.visit(print)
+        # print
+        hf.visit(print)
