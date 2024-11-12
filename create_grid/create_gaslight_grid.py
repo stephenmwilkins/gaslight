@@ -141,10 +141,21 @@ if __name__ == "__main__":
     for i, photoionisation_index in enumerate(photoionisation_index_list):
 
         # Check to see if pickle file exists. If not append to list of failed
-        # grid points.
+        # grid points...
 
         if not Path(f'{output_directory}/{i}.pck').is_file():
             failed_grid_points.append(i)
+
+            # ... and also record the line luminosity as False
+            
+            # loop over lines
+            for line_id in line_ids:
+
+                # loop over incident models
+                for incident_index in incident_index_list:
+                    index = (tuple(list(incident_index) + list(photoionisation_index)))
+                    luminosity[line_id][index] = False
+
 
         # If any models have failed, keep looping but don't bother trying to
         # read the files.
@@ -172,6 +183,7 @@ if __name__ == "__main__":
         print(failed_grid_points)
 
         # Save this list and generate a new run command
+        open(f'{model_name}.failed_models').writelines(failed_grid_points)
 
     # open the new grid and save results if there are not failures
     if len(failed_grid_points) == 0:
