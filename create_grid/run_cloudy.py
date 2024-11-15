@@ -212,7 +212,7 @@ if __name__ == "__main__":
         print(os.getcwd())
 
         # run the cloudy job
-        command = f'{cloudy_executable} -r {index}'
+        command = f'{cloudy_executable} -r {i}'
         print(command)
         os.system(command)
 
