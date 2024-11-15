@@ -214,54 +214,58 @@ if __name__ == "__main__":
         print(command)
         os.system(command)
 
-        # if it's the first index set up the temporary output dictionary
-        if not temporary_output_dictionary:
+    
 
-            temporary_output_dictionary = {}
+    # NOTE: since we now saving all the outputs we don't need to do this here
 
-            # read in lines and use line id to set up arrays
-            line_ids, wavelengths, luminosities = cloudy.read_linelist(
-                index,
-                extension='emergent_elin')
+    #     # if it's the first index set up the temporary output dictionary
+    #     if not temporary_output_dictionary:
 
-            for line_id in line_ids:
-                temporary_output_dictionary[line_id] = np.empty(shape)
+    #         temporary_output_dictionary = {}
 
-        if normalise:
+    #         # read in lines and use line id to set up arrays
+    #         line_ids, wavelengths, luminosities = cloudy.read_linelist(
+    #             index,
+    #             extension='emergent_elin')
 
-            # read synthesizer incident spectra to determine the normalisation to apply
-            lam, lnu = np.load(f'{i}.ssed.npy')
-            synthesizer_incident_sed = Sed(lam=lam*Angstrom, lnu=lnu*erg/s/Hz)
+    #         for line_id in line_ids:
+    #             temporary_output_dictionary[line_id] = np.empty(shape)
 
-            # # Read first spectra from the first grid point to get length and
-            # # wavelength grid.
-            # lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
+    #     if normalise:
 
-            # read the cloudy output continuum file containing the spectra
-            spec_dict = cloudy.read_continuum(i, return_dict=True)
+    #         # read synthesizer incident spectra to determine the normalisation to apply
+    #         lam, lnu = np.load(f'{i}.ssed.npy')
+    #         synthesizer_incident_sed = Sed(lam=lam*Angstrom, lnu=lnu*erg/s/Hz)
 
-            # create synthesizer Sed object
-            cloudy_incident_sed = Sed(
-                lam=spec_dict["lam"],
-                lnu=spec_dict["incident"])
+    #         # # Read first spectra from the first grid point to get length and
+    #         # # wavelength grid.
+    #         # lam = cloudy.read_wavelength(f"{cloudy_dir}/{grid_name}/1")
 
-            # calcualte normalisation
-            normalisation = (cloudy_incident_sed.bolometric_luminosity /
-                synthesizer_incident_sed.bolometric_luminosity)
+    #         # read the cloudy output continuum file containing the spectra
+    #         spec_dict = cloudy.read_continuum(i, return_dict=True)
 
-        else:
+    #         # create synthesizer Sed object
+    #         cloudy_incident_sed = Sed(
+    #             lam=spec_dict["lam"],
+    #             lnu=spec_dict["incident"])
 
-            normalisation = 1.0
+    #         # calcualte normalisation
+    #         normalisation = (cloudy_incident_sed.bolometric_luminosity /
+    #             synthesizer_incident_sed.bolometric_luminosity)
 
-        # read in lines and use line id to set up arrays
-        line_ids, wavelengths, luminosities = cloudy23.read_linelist(
-            index,
-            extension='emergent_elin')
+    #     else:
 
-        for line_id, luminosity in zip(line_ids, luminosities):
-            temporary_output_dictionary[line_id][tuple(incident_index_tuple)] = luminosity * normalisation
+    #         normalisation = 1.0
 
-    # save the temporary file
-    with open(f'{index}.pck', 'wb') as file:
-        pickle.dump(temporary_output_dictionary, file)
+    #     # read in lines and use line id to set up arrays
+    #     line_ids, wavelengths, luminosities = cloudy23.read_linelist(
+    #         index,
+    #         extension='emergent_elin')
+
+    #     for line_id, luminosity in zip(line_ids, luminosities):
+    #         temporary_output_dictionary[line_id][tuple(incident_index_tuple)] = luminosity * normalisation
+
+    # # save the temporary file
+    # with open(f'{index}.pck', 'wb') as file:
+    #     pickle.dump(temporary_output_dictionary, file)
 
