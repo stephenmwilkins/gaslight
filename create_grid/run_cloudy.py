@@ -2,6 +2,7 @@ import os
 import argparse
 import pickle
 import numpy as np
+from pathlib import Path
 from unyt import erg, s, Hz, Angstrom
 from synthesizer.grid import Grid
 from synthesizer.sed import Sed
@@ -173,20 +174,25 @@ if __name__ == "__main__":
         # define input SED
         shape_commands = [f'table SED "{i}.sed" \n']
 
+        # Create output sub-directory
+        output_subdirectory = f'{output_directory}/{index+1}' # use the original index 
+        Path(output_subdirectory).mkdir(parents=True, exist_ok=True)
+
+
         # Create cloudy input file.
         # This saves each cloudy run with index. These are then read into a
         # master file for each index. linelist.dat is not copied as it should
         # be already copied and throwns an error if it copies it again.
         cloudy.create_cloudy_input(
-            index,
+            i,
             shape_commands,
             abundances,
-            output_dir=output_directory,
+            output_dir=output_subdirectory,
             copy_linelist=False,
             **parameters,
         )
 
-        input_file = f"{output_directory}/{index}.in"
+        input_file = f"{output_subdirectory}/{i}.in"
         cloudy_executable = f'{cloudy_dir}/{fixed_parameters["cloudy_version"]}/source/cloudy.exe'
 
         # set CLOUDY_DATA_PATH environment variable
@@ -195,12 +201,8 @@ if __name__ == "__main__":
 
         # change directory to the output directory
         # NOT SURE WHY THIS ISN'T OUTSIDE THE LOOP
-        os.chdir(output_directory)
+        os.chdir(output_subdirectory)
         print(os.getcwd())
-
-
-        
-
 
         # run the cloudy job
         command = f'{cloudy_executable} -r {index}'
