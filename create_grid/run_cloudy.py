@@ -179,10 +179,12 @@ if __name__ == "__main__":
         Path(output_subdirectory).mkdir(parents=True, exist_ok=True)
 
         # Make symlink to SED
-        os.symlink(f'{output_directory}/{i}.sed', f'{output_subdirectory}/{i}.sed')
+        if not Path(f'{output_subdirectory}/{i}.sed').is_file():
+            os.symlink(f'{output_directory}/{i}.sed', f'{output_subdirectory}/{i}.sed')
 
         # Make symlink to linelist
-        os.symlink(f'{output_directory}/linelist.dat', f'{output_subdirectory}/linelist.dat')
+        if not Path(f'{output_subdirectory}/linelist.dat').is_file():
+            os.symlink(f'{output_directory}/linelist.dat', f'{output_subdirectory}/linelist.dat')
 
         # Create cloudy input file.
         # This saves each cloudy run with index. These are then read into a
