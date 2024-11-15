@@ -178,8 +178,11 @@ if __name__ == "__main__":
         output_subdirectory = f'{output_directory}/{index+1}' # use the original index 
         Path(output_subdirectory).mkdir(parents=True, exist_ok=True)
 
-        # Make link to SED
+        # Make symlink to SED
         os.symlink(f'{output_directory}/{i}.sed', f'{output_subdirectory}/{i}.sed')
+
+        # Make symlink to linelist
+        os.symlink(f'{output_directory}/linelist.dat', f'{output_subdirectory}/linelist.dat')
 
         # Create cloudy input file.
         # This saves each cloudy run with index. These are then read into a
