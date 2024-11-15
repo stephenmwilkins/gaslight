@@ -178,6 +178,8 @@ if __name__ == "__main__":
         output_subdirectory = f'{output_directory}/{index+1}' # use the original index 
         Path(output_subdirectory).mkdir(parents=True, exist_ok=True)
 
+        # Make link to SED
+        os.symlink(f'{output_directory}/{i}.sed', f'{output_subdirectory}/{i}.sed')
 
         # Create cloudy input file.
         # This saves each cloudy run with index. These are then read into a
