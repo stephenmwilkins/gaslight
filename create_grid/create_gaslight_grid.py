@@ -201,8 +201,6 @@ if __name__ == "__main__":
                     normalisation = (cloudy_incident_sed.bolometric_luminosity /
                                      original_incident_sed.bolometric_luminosity)
                     
-                    print(normalisation)
-
                 else:
 
                     normalisation = 1.0
@@ -211,6 +209,8 @@ if __name__ == "__main__":
                     line_ids, line_luminosities):
                     luminosity[line_id][tuple(model_index)] = (line_luminosity
                                                                / normalisation)
+
+                print(normalisation, luminosity['H 1 6562.80A'][tuple(model_index)])
 
 
     # # If there are failures list them here:
