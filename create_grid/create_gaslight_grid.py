@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # open the linelist file
     with open(f'{output_directory}/linelist.dat', 'r') as file:
-        line_ids = list(map(lambda x: x[:-2], file.readlines()))
+        line_ids = list(map(lambda x: x[:-1], file.readlines()))
 
     # setup output arrays
     luminosity = {}
