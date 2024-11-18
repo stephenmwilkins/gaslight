@@ -21,13 +21,13 @@ geometry: planeparallel
 
 # IONISATION PARAMETER 
 ionisation_parameter_model: fixed  # which ionisation parameter model to use. `ref` assumes a varying ionisation parameter at a fixed reference age and metallicity
-ionisation_parameter: [0.001, 0.01, 0.1]  
+ionisation_parameter: [0.0001, 0.01, 1.0]  
 
 # DENSITY
 hydrogen_density: [1.0e+2, 1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10, 1.0e+12]
 
 # STOPPING CRITERIA
-stop_column_density: [21, 22, 23]  # stopping column density
+stop_column_density: [21, 23, 25]  # stopping column density
 
 # MISC COMMANDS
 CMB: false  # include CMB heating
