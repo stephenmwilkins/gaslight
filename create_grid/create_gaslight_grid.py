@@ -183,7 +183,7 @@ if __name__ == "__main__":
                     # Read synthesizer incident spectra to determine the 
                     # normalisation to apply.
                     lam, lnu = np.load(f'{output_directory}/{j}.ssed.npy')
-                    synthesizer_incident_sed = Sed(
+                    original_incident_sed = Sed(
                         lam=lam*Angstrom,
                         lnu=lnu*erg/s/Hz)
 
@@ -199,7 +199,9 @@ if __name__ == "__main__":
 
                     # calcualte normalisation
                     normalisation = (cloudy_incident_sed.bolometric_luminosity /
-                                     synthesizer_incident_sed.bolometric_luminosity)
+                                     original_incident_sed.bolometric_luminosity)
+                    
+                    print(normalisation)
 
                 else:
 
