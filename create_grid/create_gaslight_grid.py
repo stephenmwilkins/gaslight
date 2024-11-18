@@ -1,9 +1,13 @@
 import h5py
+from unyt import Angstrom, erg, s, Hz
 import argparse
 import pickle
 import numpy as np
 from pathlib import Path
 from synthesizer.grid import Grid
+from synthesizer.sed import Sed
+from synthesizer.abundances import Abundances
+from synthesizer.photoionisation import cloudy23, cloudy17
 from utils import (
     get_grid_properties,
     load_grid_params,)
@@ -39,6 +43,12 @@ if __name__ == "__main__":
     parser.add_argument("-output_dir",
                         type=str,
                         required=True)
+    
+    # the model index
+    parser.add_argument("-normalise",
+                        type=str,
+                        default=True,
+                        required=False)
 
     # parse arguments
     args = parser.parse_args()
@@ -47,6 +57,7 @@ if __name__ == "__main__":
     incident_grid = args.incident_grid
     config_file = args.config_file
     output_dir = args.output_dir
+    normalise = args.normalise
 
     # define model name
     model_name = f'{incident_grid}-{config_file}'
@@ -57,6 +68,13 @@ if __name__ == "__main__":
     # load the cloudy parameters you are going to run
     fixed_parameters, photoionisation_axes_values = (
         load_grid_params(config_file))
+
+
+    # set cloudy version
+    if fixed_parameters['cloudy_version'] == 'c17.03':
+        cloudy = cloudy17
+    if fixed_parameters['cloudy_version'] == 'c23.01':
+        cloudy = cloudy23
 
     # doesn't matter about the ordering of these
     photoionisation_axes = list(photoionisation_axes_values.keys())
@@ -83,7 +101,6 @@ if __name__ == "__main__":
                             verbose=False)
 
     print('photoionisation_shape', photoionisation_shape)
-
 
     # get incident axes
     incident_axes = incident_grid.axes
@@ -137,56 +154,62 @@ if __name__ == "__main__":
 
     failed_grid_points = []
 
-    # loop over photoionisation grid points
+    # Loop over photoionisation grid points.
     for i, photoionisation_index in enumerate(photoionisation_index_list):
 
-        # loop over incident spectra grid points
+        # Loop over incident spectra grid points.
         for j, incident_index in enumerate(incident_index_list):
 
-            # check to see 
+            # Combine the incident_index and photoionisation_index to get the
+            # grid point.
+            model_index = incident_index + photoionisation_index
+
+            # check to see if any of the runs failed
             if not Path(f'{output_directory}/{i+1}/{j}.emergent_elin').is_file():
                 print(f'model {i} {j} failed')
                 failed_grid_points.append((i, j))
 
+            else:
 
+                # read in line luminosities and wavelengths
+                line_ids, wavelengths, line_luminosities = cloudy.read_linelist(
+                    f'{output_directory}/{i+1}/{j}',
+                    extension='emergent_elin')
 
-        # # Check to see if pickle file exists. If not append to list of failed
-        # # grid points...
+                # Calculate the normalisation by reading in both the original
+                # and incident spectral energy distribution.
+                if normalise:
 
-        # if not Path(f'{output_directory}/{i}.pck').is_file():
-        #     failed_grid_points.append(i)
+                    # Read synthesizer incident spectra to determine the 
+                    # normalisation to apply.
+                    lam, lnu = np.load(f'{output_directory}/{j}.ssed.npy')
+                    synthesizer_incident_sed = Sed(
+                        lam=lam*Angstrom,
+                        lnu=lnu*erg/s/Hz)
 
-        #     # ... and also record the line luminosity as False
-            
-        #     # loop over lines
-        #     for line_id in line_ids:
+                    # read the cloudy output continuum file containing the spectra
+                    spec_dict = cloudy.read_continuum(
+                        f'{output_directory}/{j}',
+                        return_dict=True)
 
-        #         # loop over incident models
-        #         for incident_index in incident_index_list:
-        #             index = (tuple(list(incident_index) + list(photoionisation_index)))
-        #             luminosity[line_id][index] = False
+                    # create synthesizer Sed object
+                    cloudy_incident_sed = Sed(
+                        lam=spec_dict["lam"],
+                        lnu=spec_dict["incident"])
 
+                    # calcualte normalisation
+                    normalisation = (cloudy_incident_sed.bolometric_luminosity /
+                                     synthesizer_incident_sed.bolometric_luminosity)
 
-        # # If any models have failed, keep looping but don't bother trying to
-        # # read the files.
-        # if len(failed_grid_points) == 0:
+                else:
 
-        #     # Open pickle file
-        #     with open(f'{output_directory}/{i}.pck', 'rb') as file:
-        #         out = pickle.load(file)
+                    normalisation = 1.0
 
-        #         # loop over lines
-        #         for line_id in line_ids:
+                for line_id, line_luminosity in zip(
+                    line_ids, line_luminosities):
+                    luminosity[line_id][tuple(model_index)] = (line_luminosity
+                                                               * normalisation)
 
-        #             # loop over incident models
-        #             for incident_index in incident_index_list:
-                        
-        #                 # full index
-        #                 # print(photoionisation_index, incident_index)
-
-        #                 index = (tuple(list(incident_index)
-        #                             + list(photoionisation_index)))
-        #                 luminosity[line_id][index] = out[line_id][tuple(incident_index)]
 
     # # If there are failures list them here:
     # if len(failed_grid_points) > 0:
@@ -211,4 +234,4 @@ if __name__ == "__main__":
             hf[f'luminosity/{line_id}'] = luminosity[line_id]
 
         # print
-        hf.visit(print)
+        # hf.visit(print)
