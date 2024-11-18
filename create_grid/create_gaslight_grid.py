@@ -126,10 +126,9 @@ if __name__ == "__main__":
 
     print('total_shape', total_shape)
 
-    # open the first pickle file to get a list of lines
-    with open(f'{output_directory}/0.pck', 'rb') as file:
-        out = pickle.load(file)
-        line_ids = list(out.keys())
+    # open the linelist file
+    with open(f'{output_directory}/linelist.dat', 'r') as file:
+        line_ids = list(map(lambda x: x[:-2], file.readlines()))
 
     # setup output arrays
     luminosity = {}
@@ -143,11 +142,11 @@ if __name__ == "__main__":
 
         # loop over incident spectra grid points
         for j, incident_index in enumerate(incident_index_list):
-            
+
             # check to see 
             if not Path(f'{output_directory}/{i+1}/{j}.emergent_elin').is_file():
                 print(f'model {i} {j} failed')
-
+                failed_grid_points.append((i, j))
 
 
 
