@@ -194,8 +194,8 @@ if __name__ == "__main__":
 
                     # create synthesizer Sed object
                     cloudy_incident_sed = Sed(
-                        lam=spec_dict["lam"],
-                        lnu=spec_dict["incident"])
+                        lam=spec_dict["lam"]*Angstrom,
+                        lnu=spec_dict["incident"]*erg/s/Hz)
 
                     # calcualte normalisation
                     normalisation = (cloudy_incident_sed.bolometric_luminosity /
@@ -208,7 +208,7 @@ if __name__ == "__main__":
                 for line_id, line_luminosity in zip(
                     line_ids, line_luminosities):
                     luminosity[line_id][tuple(model_index)] = (line_luminosity
-                                                               * normalisation)
+                                                               / normalisation)
 
 
     # # If there are failures list them here:
