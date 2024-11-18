@@ -162,9 +162,7 @@ if __name__ == "__main__":
 
             # Combine the incident_index and photoionisation_index to get the
             # grid point.
-
-            print(incident_index, photoionisation_index)
-            model_index = incident_index + photoionisation_index
+            model_index = tuple(incident_index) + tuple(photoionisation_index)
 
             # check to see if any of the runs failed
             if not Path(f'{output_directory}/{i+1}/{j}.emergent_elin').is_file():
