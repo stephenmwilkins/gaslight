@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
                     # read the cloudy output continuum file containing the spectra
                     spec_dict = cloudy.read_continuum(
-                        f'{output_directory}/{j}',
+                        f'{output_directory}/{i+1}/{j}',
                         return_dict=True)
 
                     # create synthesizer Sed object
