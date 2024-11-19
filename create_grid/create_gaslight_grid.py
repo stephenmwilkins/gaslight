@@ -210,17 +210,16 @@ if __name__ == "__main__":
                     luminosity[line_id][tuple(model_index)] = (line_luminosity
                                                                / normalisation)
 
-                print(normalisation, luminosity['H 1 6562.80A'][tuple(model_index)])
+                # print(normalisation, luminosity['H 1 6562.80A'][tuple(model_index)])
 
+    # If there are failures list them here:
+    if len(failed_grid_points) > 0:
+        print(failed_grid_points)
 
-    # # If there are failures list them here:
-    # if len(failed_grid_points) > 0:
-    #     print(failed_grid_points)
+        failed_grid_points_string_list = list(map(lambda x: f'{x[0]} {x[1]}\n', failed_grid_points))
 
-    #     failed_grid_points_string_list = list(map(lambda x: f'{x}\n', failed_grid_points))
-
-    #     # Save this list and generate a new run command
-    #     open(f'{model_name}.failed_models', 'w').writelines(failed_grid_points_string_list)
+        # Save this list and generate a new run command
+        open(f'{model_name}.failed_models', 'w').writelines(failed_grid_points_string_list)
 
     # open the new grid and save results
     with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
