@@ -9,8 +9,6 @@ from synthesizer.line import (
     get_ratio_label,
     get_diagram_labels,
     get_roman_numeral,
-    get_bpt_kauffman03,
-    get_bpt_kewley01,
     LineCollection,
 )
 

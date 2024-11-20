@@ -7,6 +7,7 @@ from gaslight.line import (
     LineCollection,
     get_line_wavelength_from_id,
 )
+from scipy.interpolate import interpn, RegularGridInterpolator
 
 
 class Grid:
@@ -107,6 +108,12 @@ class Grid:
 
                 # get luminosity grid
                 self.luminosity[line] = hf["luminosity"][line][:]
+
+        # dictionary holding interpolators
+        self.interpolator = {}
+
+        # list of parameters where we interpolate in log space
+        self.interpolator_log10 = []
 
     def __str__(self):
         """
@@ -256,3 +263,144 @@ class Grid:
         line_collection = LineCollection(lines)
 
         return line_collection
+
+    def setup_interpolator(self, line_ids=None, log10=None):
+
+        """
+        Setup the linear interpolator for the lines in line_ids.
+
+        Arguments:
+            line_ids (str, list)
+                Single line_id or list of line_ids.
+            log10 (list)
+                List of parameters (axis) to do interpolation in log10 space.
+        """
+
+        # if no line_id is provided use all available lines
+        if not line_ids:
+            line_ids = self.lines
+
+        # if a single line_id is provided turn into a list for iterating
+        if isinstance(line_ids, str):
+            line_ids = [line_ids]
+
+        self.interpolator_log10 = log10
+
+        # if a parameter is to be interpolated in log10 space
+        if log10:
+            points = []
+            for axis in self.axes:
+                if axis in log10:
+                    points.append(np.log10(self.axes_values[axis]))
+                else:
+                    points.append(self.axes_values[axis])
+        else:
+            points = [self.axes_values[axis] for axis in self.axes]
+
+        for line_id in line_ids:
+
+            values = self.luminosity[line_id]
+
+            self.interpolator[line_id] = RegularGridInterpolator(
+                points,
+                values)
+
+    def get_interpolated_line(self, parameter_dict, line_id):
+        """
+        Method for getting the interpolated line luminosity.
+
+        Args:
+            parameter_dict (dict)
+                A dictionary of parameter values to use.
+            line_id (str)
+                The id of the line. 
+            log10 (list)
+                List of parameters to interpolate in logspace
+
+        Returns:
+            line (synthesizer.line.Line)
+                A synthesizer Line object.
+        """
+
+        if line_id not in self.interpolator.keys():
+            self.setup_interpolator(line_id)
+
+        # create array of parameters in the correct order
+        if self.interpolator_log10:
+            point = []
+            for axis in self.axes:
+                if axis in self.interpolator_log10:
+                    point.append(np.log10(parameter_dict[axis]))
+                else:
+                    point.append(parameter_dict[axis])
+        else:
+            point = [parameter_dict[axis] for axis in self.axes]
+
+        # calculate lumuinisity using interpolation
+        luminosity = self.interpolator[line_id](point)
+
+        wavelength = self.wavelengths[line_id]
+
+        return Line(line_id, wavelength, luminosity[0])
+
+    def get_interpolated_line_collection(self, parameter_dict, line_ids=None):
+        """
+        Method for creating a LineCollection using linear interpolation.
+
+        Args:
+            parameter_dict (tuple)
+                A dictionary of parameters to interpolate.
+            line_id (str)
+                The id of the line. If None use all available lines.
+
+        Returns:
+            line_collection (synthesizer.line.LineCollection)
+                A synthesizer LineCollection object.
+        """
+
+        if line_ids is None:
+            line_ids = self.lines
+
+        # Line dictionary
+        lines = {}
+
+        for line_id in line_ids:
+            line = self.get_interpolated_line(parameter_dict, line_id)
+
+            # Add to dictionary
+            lines[line.id] = line
+
+        # Create and return collection
+
+        line_collection = LineCollection(lines)
+
+        return line_collection
+
+    def flatten(self, lines=None):
+        """
+        Method for creating flattened versions for the axes and luminosities.
+
+        Args:
+            lines (list)
+                A list of lines to flatten, otherwise use all.
+
+        """
+
+        # if no lines are provided flatten all
+        if lines is None:
+            lines = self.lines
+
+        # loop over lines and flatten the luminosities
+        self.luminosity_flattened = {}
+
+        for line in lines:
+            self.luminosity_flattened[line] = self.luminosity[line].flatten()
+
+        # flatten the axes
+        axes_values_tuple = (self.axes_values[axis] for axis in self.axes)
+
+        axes_values_mesh_tuple = np.meshgrid(*axes_values_tuple, indexing='ij')
+
+        self.axes_values_flattened = {
+            axis: axes_values_mesh_tuple[axis_index].flatten()
+            for axis_index, axis in enumerate(self.axes)}
