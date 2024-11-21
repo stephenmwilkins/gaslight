@@ -53,7 +53,7 @@ if __name__ == "__main__":
         # the model index
     parser.add_argument("-save_continuum",
                         type=str,
-                        default=True,
+                        default=False,
                         required=False)
 
     # parse arguments
@@ -166,12 +166,11 @@ if __name__ == "__main__":
 
         # read a single cloudy output to get the wavelength grid
         lam = cloudy.read_wavelength(f'{output_directory}/1/0')
-        print(lam.shape)
-        print(total_shape)
+        # extend total shape to include wavelength axis
         continuum_total_shape = tuple(total_shape) + lam.shape
-        print(continuum_total_shape)
-
+        # nebular continuum array
         nebular_continuum = np.empty(continuum_total_shape)
+        # transmission array
         transmission = np.empty(continuum_total_shape)
 
     failed_grid_points = []
@@ -233,9 +232,12 @@ if __name__ == "__main__":
 
                 # Save the continuum if requested
                 if save_continuum:
-                    nebular_continuum[model_index] = (
+                    nebular_continuum[model_index, :] = (
                         normalisation * spec_dict["nebular_continuum"])
-                    transmission[model_index] = (
+                    
+                    # transmission is the ratio of the transmitted to incident
+                    # spectra
+                    transmission[model_index, :] = (
                         spec_dict["transmitted"] / spec_dict["incident"])
 
     # If there are failures list them here:
