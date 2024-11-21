@@ -168,7 +168,7 @@ if __name__ == "__main__":
         lam = cloudy.read_wavelength(f'{output_directory}/1/0')
         print(lam.shape)
         print(total_shape)
-        continuum_total_shape = total_shape + lam.shape
+        continuum_total_shape = tuple(total_shape) + lam.shape
         print(continuum_total_shape)
 
         nebular_continuum = np.empty(continuum_total_shape)
