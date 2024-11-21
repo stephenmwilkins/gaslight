@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
-from unyt import angstrom, unyt_array, unyt_quantity
+from math import prod
+from unyt import Angstrom, c, erg, s, Hz, unyt_array, unyt_quantity
 import gaslight.exceptions as exceptions
 from gaslight.line import (
     Line, 
@@ -89,25 +90,49 @@ class Grid:
             for axis in self.axes:
                 setattr(self, axis, self.axes_values[axis])
 
-            # Number of axes
-            self.naxes = len(self.axes)
-
             # If no lines are provided read them all
-
             if not lines:
                 lines = list(hf['luminosity'].keys())
-
-            self.wavelengths = {line_id: get_line_wavelength_from_id(line_id)
-                                for line_id in lines}
             self.lines = lines
+            self.number_of_lines = len(self.lines)
 
+            # Get basic details of the grids.
+            # number of axes
+            self.naxes = len(self.axes)
+            self.number_of_axes = self.naxes
+
+            # grid shape
+            self.grid_shape = hf["luminosity"][lines[0]][:].shape
+            self.nmodels = np.prod(self.grid_shape)
+
+            # Get wavelengths.
+            # get wavelenths from IDs -- DEPRECATE IN THE FUTURE
+            self.wavelengths = {line_id:
+                                get_line_wavelength_from_id(line_id)
+                                for line_id in lines}
+
+            # get wavelengths from the HDF5 file
+            # self.wavelengths = {hf[f'wavelengths/{line}'][:] * Angstrom for line in lines}
+            
+            # Get line luminosities.
             self.luminosity = {}
             for line in lines:
+                self.luminosity[line] = hf["luminosity"][line][:] * erg / s
 
-                # calculate wavelength
+            # Get continuum luminosities.
+            self.nebular_continuum = False
+            self.transmitted_continuum = False
+            self.equivalent_widths = False
+            if "nebular_continuum" in hf.keys():
+                self.nebular_continuum = {}
+                self.transmitted_continuum = {}
+                for line in lines:
+                    self.nebular_continuum[line] = hf["nebular_continuum"][line][:] * erg / s / Hz
+                    self.transmitted_continuum[line] = hf["transmitted_continuum"][line][:] * erg / s / Hz
 
-                # get luminosity grid
-                self.luminosity[line] = hf["luminosity"][line][:]
+        # It is possible that some models may have failed. We can identify
+        # these if the value of a H\alpha luminosity is False.
+        self.failed_models = (self.luminosity['H 1 6562.80A'].value == False)
 
         # dictionary holding interpolators
         self.interpolator = {}
@@ -126,12 +151,17 @@ class Grid:
         # Add the content of the summary to the string to be printed
         pstr += "-" * 30 + "\n"
         pstr += "SUMMARY OF GASLIGHT GRID" + "\n"
+
+        pstr += "Grid dimensions: \n"
+        pstr += f"  Numer of axes: {self.naxes}\n"
+        pstr += f"  Grid shape: {self.grid_shape}\n"
+        pstr += f"  Numer of models: {self.nmodels}\n"
+        pstr += f"  Numer of failed models: {np.sum(self.failed_models)} ({100 * np.sum(self.failed_models) / self.nmodels}%)\n"
+        pstr += "Grid axes: \n"
         for axis in self.axes:
-            pstr += f"{axis}: {getattr(self, axis)} \n"
-        # for k, v in self.parameters.items():
-        #     pstr += f"{k}: {v} \n"
-        pstr += f"available lines: {self.lines}\n"
-    
+            pstr += f"  {axis}: {getattr(self, axis)} \n"
+
+        # pstr += f"available lines: {self.lines}\n"
         pstr += "-" * 30 + "\n"
 
         return pstr
@@ -199,13 +229,14 @@ class Grid:
                 ]
             )
 
-    def get_line(self, grid_point, line_id):
+    def get_line(self, grid_point_, line_id):
         """
         Function for creating a Line object for a given line_id and grid_point.
 
         Args:
             grid_point (tuple)
-                A tuple of integers specifying the closest grid point.
+                A tuple of integers specifying the closest grid point or a 
+                dictionary containing parameter values.
             line_id (str)
                 The id of the line.
 
@@ -213,6 +244,11 @@ class Grid:
             line (synthesizer.line.Line)
                 A synthesizer Line object.
         """
+
+        if isinstance(grid_point_, dict):
+            grid_point = self.get_nearest_grid_point(grid_point_)
+        if isinstance(grid_point_, tuple):
+            grid_point = grid_point_
 
         # Throw exception if the grid_point has a different shape from the grid
         if len(grid_point) != self.naxes:
@@ -231,7 +267,7 @@ class Grid:
 
         return Line(line_id, wavelength, luminosity)
 
-    def get_line_collection(self, grid_point, line_ids=None):
+    def get_line_collection(self, grid_point_, line_ids=None):
         """
         Function for creating a Line object for a given line_id and grid_point.
 
@@ -246,6 +282,11 @@ class Grid:
                 A synthesizer LineCollection object.
         """
         
+        if isinstance(grid_point_, dict):
+            grid_point = self.get_nearest_grid_point(grid_point_)
+        if isinstance(grid_point_, tuple):
+            grid_point = grid_point_
+
         if line_ids is None:
             line_ids = self.lines
 
@@ -390,11 +431,16 @@ class Grid:
         if lines is None:
             lines = self.lines
 
-        # loop over lines and flatten the luminosities
+        # Loop over lines and flatten the luminosities and equivalent widths 
+        # (if they exist).
         self.luminosity_flattened = {}
-
         for line in lines:
             self.luminosity_flattened[line] = self.luminosity[line].flatten()
+
+        self.equivalent_widths_flattened = {}
+        if self.equivalent_widths:
+            for line in lines:
+                self.equivalent_widths_flattened[line] = self.equivalent_widths[line].flatten()
 
         # flatten the axes
         axes_values_tuple = (self.axes_values[axis] for axis in self.axes)
@@ -404,3 +450,27 @@ class Grid:
         self.axes_values_flattened = {
             axis: axes_values_mesh_tuple[axis_index].flatten()
             for axis_index, axis in enumerate(self.axes)}
+
+        # flatten the list of failed models
+        self.failed_models_flattened = self.failed_models.flatten()
+
+    def calculate_equivalent_widths(self, escape_fraction=0.0):
+        """
+        Method for to calculate the equivalent widths for the grid.
+
+        Args:
+            escape_fraction (float)
+                The nebular escape fraction.
+
+        Returns:
+            equivalent_widths (dict)
+                A dictionary of equivalent widths assuming the provided escape fraction.
+
+        """
+        self.equivalent_widths = {}
+        for line in self.lines:
+            line_luminosity = (1 - escape_fraction) * self.luminosity[line]
+            continuum = (c/self.wavelengths[line]**2) * ((1-escape_fraction) * self.nebular_continuum[line] + self.transmitted_continuum[line])
+            self.equivalent_widths[line] = (line_luminosity / continuum)
+
+        return self.equivalent_widths
