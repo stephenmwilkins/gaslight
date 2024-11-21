@@ -49,6 +49,12 @@ if __name__ == "__main__":
                         type=str,
                         default=True,
                         required=False)
+    
+        # the model index
+    parser.add_argument("-save_continuum",
+                        type=str,
+                        default=True,
+                        required=False)
 
     # parse arguments
     args = parser.parse_args()
@@ -58,6 +64,7 @@ if __name__ == "__main__":
     config_file = args.config_file
     output_dir = args.output_dir
     normalise = args.normalise
+    save_continuum = args.save_continuum
 
     # define model name
     model_name = f'{incident_grid}-{config_file}'
@@ -147,10 +154,17 @@ if __name__ == "__main__":
     with open(f'{output_directory}/linelist.dat', 'r') as file:
         line_ids = list(map(lambda x: x[:-1], file.readlines()))
 
-    # setup output arrays
+    # Setup output arrays.
+
+    # line luminosities
     luminosity = {}
     for line_id in line_ids:
         luminosity[line_id] = np.empty(total_shape)
+
+    # continuum
+    if save_continuum:
+        nebular_continuum = np.empty(total_shape)
+        transmission = np.empty(total_shape)
 
     failed_grid_points = []
 
@@ -164,6 +178,30 @@ if __name__ == "__main__":
             # grid point.
             model_index = tuple(incident_index) + tuple(photoionisation_index)
 
+
+            if normalise or save_continuum:
+
+                # Read synthesizer incident spectra to determine the 
+                # normalisation to apply.
+                lam, lnu = np.load(f'{output_directory}/{j}.ssed.npy')
+                original_incident_sed = Sed(
+                    lam=lam*Angstrom,
+                    lnu=lnu*erg/s/Hz)
+
+                # read the cloudy output continuum file containing the spectra
+                spec_dict = cloudy.read_continuum(
+                    f'{output_directory}/{i+1}/{j}',
+                    return_dict=True)
+
+                # create synthesizer Sed object
+                cloudy_incident_sed = Sed(
+                    lam=spec_dict["lam"]*Angstrom,
+                    lnu=spec_dict["incident"]*erg/s/Hz)
+
+                # calculate normalisation
+                normalisation = (cloudy_incident_sed.bolometric_luminosity /
+                                    original_incident_sed.bolometric_luminosity)  
+
             # check to see if any of the runs failed
             if not Path(f'{output_directory}/{i+1}/{j}.emergent_elin').is_file():
                 print(f'model {i} {j} failed')
@@ -171,46 +209,26 @@ if __name__ == "__main__":
 
             else:
 
-                # read in line luminosities and wavelengths
+                # Read in line luminosities and normalise them if required.
                 line_ids, wavelengths, line_luminosities = cloudy.read_linelist(
                     f'{output_directory}/{i+1}/{j}',
                     extension='emergent_elin')
 
-                # Calculate the normalisation by reading in both the original
-                # and incident spectral energy distribution.
-                if normalise:
-
-                    # Read synthesizer incident spectra to determine the 
-                    # normalisation to apply.
-                    lam, lnu = np.load(f'{output_directory}/{j}.ssed.npy')
-                    original_incident_sed = Sed(
-                        lam=lam*Angstrom,
-                        lnu=lnu*erg/s/Hz)
-
-                    # read the cloudy output continuum file containing the spectra
-                    spec_dict = cloudy.read_continuum(
-                        f'{output_directory}/{i+1}/{j}',
-                        return_dict=True)
-
-                    # create synthesizer Sed object
-                    cloudy_incident_sed = Sed(
-                        lam=spec_dict["lam"]*Angstrom,
-                        lnu=spec_dict["incident"]*erg/s/Hz)
-
-                    # calcualte normalisation
-                    normalisation = (cloudy_incident_sed.bolometric_luminosity /
-                                     original_incident_sed.bolometric_luminosity)
-                    
-                else:
-
+                if not normalise:
                     normalisation = 1.0
 
+                # record line luminosities
                 for line_id, line_luminosity in zip(
                     line_ids, line_luminosities):
                     luminosity[line_id][tuple(model_index)] = (line_luminosity
                                                                / normalisation)
 
-                # print(normalisation, luminosity['H 1 6562.80A'][tuple(model_index)])
+                # Save the continuum if requested
+                if save_continuum:
+                    nebular_continuum[model_index] = (
+                        normalisation * spec_dict["nebular_continuum"])
+                    transmission[model_index] = (
+                        spec_dict["transmitted"] / spec_dict["incident"])
 
     # If there are failures list them here:
     if len(failed_grid_points) > 0:
@@ -220,6 +238,7 @@ if __name__ == "__main__":
 
         # Save this list and generate a new run command
         open(f'{model_name}.failed_models', 'w').writelines(failed_grid_points_string_list)
+
 
     # open the new grid and save results
     with h5py.File(f"{grid_dir}/{model_name}.hdf5", "w") as hf:
@@ -234,5 +253,16 @@ if __name__ == "__main__":
         for line_id in line_ids:
             hf[f'luminosity/{line_id}'] = luminosity[line_id]
 
-        # print
-        # hf.visit(print)
+    # open the new continuum grid and save results
+    with h5py.File(f"{grid_dir}/{model_name}-continuum.hdf5", "w") as hf:
+
+        # save a list of the axes in the correct order
+        hf.attrs['axes'] = total_axes
+
+        # save the values of the axes
+        for k, v in total_axes_values.items():
+            hf[f'axes/{k}'] = v
+
+        for line_id in line_ids:
+            hf[f'nebular_continuum'] = nebular_continuum
+            hf[f'transmission'] = transmission
