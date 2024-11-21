@@ -232,16 +232,17 @@ if __name__ == "__main__":
 
                 # Save the continuum if requested
                 if save_continuum:
+                       
+                    if spec_dict["nebular_continuum"].shape[0]>0:
 
-                    print(spec_dict["nebular_continuum"].shape)
-                    nebular_continuum[model_index, :] = (
-                        normalisation * spec_dict["nebular_continuum"])
-                    
-                    # transmission is the ratio of the transmitted to incident
-                    # spectra
-                    print(spec_dict["transmitted"].shape)
-                    transmission[model_index, :] = (
-                        spec_dict["transmitted"] / spec_dict["incident"])
+                        nebular_continuum[model_index, :] = (
+                            normalisation * spec_dict["nebular_continuum"])
+                        
+                        # transmission is the ratio of the transmitted to incident
+                        # spectra
+                        print(spec_dict["transmitted"].shape)
+                        transmission[model_index, :] = (
+                            spec_dict["transmitted"] / spec_dict["incident"])
 
     # If there are failures list them here:
     if len(failed_grid_points) > 0:
