@@ -163,8 +163,16 @@ if __name__ == "__main__":
 
     # continuum
     if save_continuum:
-        nebular_continuum = np.empty(total_shape)
-        transmission = np.empty(total_shape)
+
+        # read a single cloudy output to get the wavelength grid
+        lam = cloudy.read_wavelength('{output_directory}/1/0')
+        print(lam.shape)
+        print(total_shape)
+        continuum_total_shape = total_shape + lam.shape
+        print(continuum_total_shape)
+
+        nebular_continuum = np.empty(continuum_total_shape)
+        transmission = np.empty(continuum_total_shape)
 
     failed_grid_points = []
 
