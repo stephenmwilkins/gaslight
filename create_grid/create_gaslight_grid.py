@@ -272,15 +272,16 @@ if __name__ == "__main__":
             hf[f'luminosity/{line_id}'] = luminosity[line_id]
 
     # open the new continuum grid and save results
-    with h5py.File(f"{grid_dir}/{model_name}-continuum.hdf5", "w") as hf:
+    if save_continuum:
+        with h5py.File(f"{grid_dir}/{model_name}-continuum.hdf5", "w") as hf:
 
-        # save a list of the axes in the correct order
-        hf.attrs['axes'] = total_axes
+            # save a list of the axes in the correct order
+            hf.attrs['axes'] = total_axes
 
-        # save the values of the axes
-        for k, v in total_axes_values.items():
-            hf[f'axes/{k}'] = v
+            # save the values of the axes
+            for k, v in total_axes_values.items():
+                hf[f'axes/{k}'] = v
 
-        hf['lam'] = lam
-        hf['nebular_continuum'] = nebular_continuum
-        hf['transmission'] = transmission
+            hf['lam'] = spec_dict['lam']
+            hf['nebular_continuum'] = nebular_continuum
+            hf['transmission'] = transmission
