@@ -165,7 +165,7 @@ if __name__ == "__main__":
     if save_continuum:
 
         # read a single cloudy output to get the wavelength grid
-        lam = cloudy.read_wavelength('{output_directory}/1/0')
+        lam = cloudy.read_wavelength(f'{output_directory}/1/0')
         print(lam.shape)
         print(total_shape)
         continuum_total_shape = total_shape + lam.shape
