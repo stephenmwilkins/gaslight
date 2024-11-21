@@ -232,15 +232,19 @@ if __name__ == "__main__":
 
                 # Save the continuum if requested
                 if save_continuum:
-                       
-                    if spec_dict["nebular_continuum"].shape[0]>0:
+                    
+                    # check whether the nebular_continuum is the correct length
+                    if spec_dict["nebular_continuum"].shape[0] > 0:
 
                         nebular_continuum[model_index, :] = (
                             normalisation * spec_dict["nebular_continuum"])
-                        
-                        # transmission is the ratio of the transmitted to incident
-                        # spectra
-                        print(spec_dict["transmitted"].shape)
+                    
+                    # check whether the transmitted and incident are the
+                    # correct length
+                    if (spec_dict["transmitted"].shape[0] > 0) or (spec_dict["incident"].shape[0] > 0):
+
+                        # transmission is the ratio of the transmitted to
+                        # incident spectra.
                         transmission[model_index, :] = (
                             spec_dict["transmitted"] / spec_dict["incident"])
 
