@@ -281,6 +281,6 @@ if __name__ == "__main__":
         for k, v in total_axes_values.items():
             hf[f'axes/{k}'] = v
 
-        for line_id in line_ids:
-            hf[f'nebular_continuum'] = nebular_continuum
-            hf[f'transmission'] = transmission
+        hf['lam'] = lam
+        hf['nebular_continuum'] = nebular_continuum
+        hf['transmission'] = transmission
