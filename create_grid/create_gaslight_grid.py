@@ -158,10 +158,12 @@ if __name__ == "__main__":
 
     # line luminosities and correspinding continuum
     luminosity = {}
+    incident_continuum = {}
     nebular_continuum = {}
     transmitted_continuum = {}
     for line_id in line_ids:
         luminosity[line_id] = np.empty(total_shape)
+        incident_continuum[line_id] = np.empty(total_shape)
         nebular_continuum[line_id] = np.empty(total_shape)
         transmitted_continuum[line_id] = np.empty(total_shape)
 
@@ -234,17 +236,23 @@ if __name__ == "__main__":
                     luminosity[line_id][model_index] = (line_luminosity
                                                                / normalisation)
 
+                    incident_continuum[line_id][model_index] = np.interp(
+                        line_wavelength,
+                        spec_dict['lam'],
+                        spec_dict['incident']
+                        ) / normalisation
+
                     nebular_continuum[line_id][model_index] = np.interp(
                         line_wavelength,
                         spec_dict['lam'],
                         spec_dict['nebular_continuum']
-                        )
+                        ) / normalisation
 
                     transmitted_continuum[line_id][model_index] = np.interp(
                         line_wavelength,
                         spec_dict['lam'],
                         spec_dict['transmitted']
-                        )
+                        ) / normalisation
 
                 # Save the continuum if requested
                 if save_continuum:
@@ -289,6 +297,7 @@ if __name__ == "__main__":
 
         for line_id in line_ids:
             hf[f'luminosity/{line_id}'] = luminosity[line_id]
+            hf[f'incident_continuum/{line_id}'] = incident_continuum[line_id]
             hf[f'nebular_continuum/{line_id}'] = nebular_continuum[line_id]
             hf[f'transmitted_continuum/{line_id}'] = transmitted_continuum[line_id]
 
