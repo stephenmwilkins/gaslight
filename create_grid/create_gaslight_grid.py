@@ -213,7 +213,11 @@ if __name__ == "__main__":
                                 original_incident_sed.bolometric_luminosity)
 
             # check to see if any of the runs failed
-            if not Path(f'{output_directory}/{i+1}/{j}.emergent_elin').is_file():
+
+            model_file = f'{output_directory}/{i+1}/{j}'
+
+            if ((not Path(f'{model_file}.emergent_elin').is_file())
+                or (not Path(f'{model_file}.cont').is_file())):
                 print(f'model {i} {j} failed')
                 failed_grid_points.append((i, j))
 
@@ -221,7 +225,7 @@ if __name__ == "__main__":
 
                 # Read in line luminosities and normalise them if required.
                 line_ids, line_wavelengths, line_luminosities = cloudy.read_linelist(
-                    f'{output_directory}/{i+1}/{j}',
+                    model_file,
                     extension='emergent_elin')
 
                 if not normalise:
