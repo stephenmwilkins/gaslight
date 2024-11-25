@@ -1,4 +1,5 @@
 import h5py
+import os
 from unyt import Angstrom, erg, s, Hz
 import argparse
 import pickle
@@ -184,6 +185,8 @@ if __name__ == "__main__":
     # Loop over photoionisation grid points.
     for i, photoionisation_index in enumerate(photoionisation_index_list):
 
+        print(f'{i}/{photoionisation_n_models}')
+
         # Loop over incident spectra grid points.
         for j, incident_index in enumerate(incident_index_list):
 
@@ -216,13 +219,27 @@ if __name__ == "__main__":
 
             model_file = f'{output_directory}/{i+1}/{j}'
 
-            if ((not Path(f'{model_file}.emergent_elin').is_file())
-                or (not Path(f'{model_file}.cont').is_file())):
-                print(f'model {i} {j} failed')
+            # Check to see if something has failed and set flag if it has.
+            failed = False
+
+            # check the emergent lines
+            if (not failed) and (not Path(f'{model_file}.emergent_elin').is_file()):
+                failed = True
+            
+            # check the continuum file
+            if (not failed) and (not Path(f'{model_file}.cont').is_file()):
+                failed = True
+
+            # check the continuum file size
+            if (not failed) and (os.path.getsize(f'{model_file}.cont') < 1000):
+                failed = True
+
+            # if failed, record the failed grid point...
+            if failed:
                 failed_grid_points.append((i, j))
 
+            # ... otherwise extract the relevant quantities
             else:
-
                 # Read in line luminosities and normalise them if required.
                 line_ids, line_wavelengths, line_luminosities = cloudy.read_linelist(
                     model_file,
