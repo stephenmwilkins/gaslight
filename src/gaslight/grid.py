@@ -1,14 +1,18 @@
 import h5py
 import numpy as np
-from math import prod
-from unyt import Angstrom, c, erg, s, Hz, unyt_array, unyt_quantity
+from unyt import Angstrom, erg, s, Hz, unyt_array, unyt_quantity
 import gaslight.exceptions as exceptions
-from gaslight.line import (
-    Line, 
+# from gaslight.line import (
+#     Line,
+#     LineCollection,
+#     get_line_wavelength_from_id,
+# )
+
+from synthesizer.line import (
+    Line,
     LineCollection,
-    get_line_wavelength_from_id,
 )
-from scipy.interpolate import interpn, RegularGridInterpolator
+from scipy.interpolate import RegularGridInterpolator
 
 
 class Grid:
@@ -94,7 +98,8 @@ class Grid:
             if not lines:
                 lines = list(hf['luminosity'].keys())
             self.lines = lines
-            self.number_of_lines = len(self.lines)
+            self.line_ids = self.lines
+            self.number_of_lines = len(self.line_ids)
 
             # Get basic details of the grids.
             # number of axes
@@ -105,30 +110,32 @@ class Grid:
             self.grid_shape = hf["luminosity"][lines[0]][:].shape
             self.nmodels = np.prod(self.grid_shape)
 
-            # Get wavelengths.
-            # get wavelenths from IDs -- DEPRECATE IN THE FUTURE
-            self.wavelengths = {line_id:
-                                get_line_wavelength_from_id(line_id)
-                                for line_id in lines}
-
             # get wavelengths from the HDF5 file
-            # self.wavelengths = {hf[f'wavelengths/{line}'][:] * Angstrom for line in lines}
+            self.wavelength = {line_id: hf[f'wavelength/{line_id}']
+                               * Angstrom for line_id in self.line_ids}
             
             # Get line luminosities.
             self.luminosity = {}
-            for line in lines:
-                self.luminosity[line] = hf["luminosity"][line][:] * erg / s
+            for line_id in self.line_ids:
+                self.luminosity[line_id] = hf["luminosity"][line_id][:] * erg / s
 
-            # Get continuum luminosities.
+            # Get continuum luminosities. These are necessary for calculating
+            # equivalent widths.
             self.nebular_continuum = False
+            self.incident_continuum = False
             self.transmitted_continuum = False
             self.equivalent_widths = False
             if "nebular_continuum" in hf.keys():
                 self.nebular_continuum = {}
                 self.transmitted_continuum = {}
-                for line in lines:
-                    self.nebular_continuum[line] = hf["nebular_continuum"][line][:] * erg / s / Hz
-                    self.transmitted_continuum[line] = hf["transmitted_continuum"][line][:] * erg / s / Hz
+                self.incident_continuum = {}
+                for line_id in self.line_ids:
+                    self.nebular_continuum[line_id] = (
+                        hf["nebular_continuum"][line_id][:] * erg / s / Hz)
+                    self.incident_continuum[line_id] = (
+                        hf["incident_continuum"][line_id][:] * erg / s / Hz)
+                    self.transmitted_continuum[line_id] = (
+                        hf["transmitted_continuum"][line_id][:] * erg / s / Hz)
 
         # It is possible that some models may have failed. We can identify
         # these if the value of a H\alpha luminosity is False.
@@ -139,6 +146,9 @@ class Grid:
 
         # list of parameters where we interpolate in log space
         self.interpolator_log10 = []
+
+        # create flattened versions of the axes
+        self.flatten_axes()
 
     def __str__(self):
         """
@@ -156,7 +166,7 @@ class Grid:
         pstr += f"  Numer of axes: {self.naxes}\n"
         pstr += f"  Grid shape: {self.grid_shape}\n"
         pstr += f"  Numer of models: {self.nmodels}\n"
-        pstr += f"  Numer of failed models: {np.sum(self.failed_models)} ({100 * np.sum(self.failed_models) / self.nmodels}%)\n"
+        pstr += f"  Numer of failed models: {np.sum(self.failed_models)} ({100 * np.sum(self.failed_models) / self.nmodels:.2f}%)\n"
         pstr += "Grid axes: \n"
         for axis in self.axes:
             pstr += f"  {axis}: {getattr(self, axis)} \n"
@@ -165,6 +175,23 @@ class Grid:
         pstr += "-" * 30 + "\n"
 
         return pstr
+
+    def flatten_axes(self):
+        """
+        Internally called method for creating flattened versions for the axes.
+        """
+
+        # flatten the axes
+        axes_values_tuple = (self.axes_values[axis] for axis in self.axes)
+
+        axes_values_mesh_tuple = np.meshgrid(*axes_values_tuple, indexing='ij')
+
+        self.axes_values_flattened = {
+            axis: axes_values_mesh_tuple[axis_index].flatten()
+            for axis_index, axis in enumerate(self.axes)}
+
+        # flatten the list of failed models
+        self.failed_models_flattened = self.failed_models.flatten()
 
     def get_nearest_index(self, value, array):
         """
@@ -229,16 +256,124 @@ class Grid:
                 ]
             )
 
-    def get_line(self, grid_point_, line_id):
+    def get_line(
+            self,
+            line_id,
+            covering_fraction=1.0,
+            incident_escape_fraction=1.0,
+            ):
         """
-        Function for creating a Line object for a given line_id and grid_point.
+        Returns the entire grid as a synthesizer.line.Line object.
 
         Args:
-            grid_point (tuple)
-                A tuple of integers specifying the closest grid point or a 
+            line_id (str)
+                The id of the line.
+            covering_fraction (float)
+                The covering fraction of ionising photons. This scales the line
+                luminosities, nebular and transmitted continuum. The incident
+                continuum is scaled by 1 - covering_fraction.
+            incident_escape_fraction (float)
+                The fraction of the incident (or transmitted) that escapes. 
+                This is relevant for modelling e.g. the narrow-line region 
+                when the central emitting source is obscured meaning we 
+                only see the line emitting region.
+
+        Returns:
+            line (synthesizer.line.Line)
+                A synthesizer Line object.
+        """
+
+        if line_id not in self.line_ids:
+            raise exceptions.InconsistentParameter(
+                "Provided line_id is" "not in list of available lines."
+            )
+
+        wavelength = self.wavelength[line_id]
+        luminosity = covering_fraction * self.luminosity[line_id]
+
+        # the transmitted continuum is unaffected by the escape fraction
+        continuum = (
+            covering_fraction * self.nebular_continuum[line_id] +
+            covering_fraction * incident_escape_fraction * self.transmitted_continuum[line_id] +
+            (1.0 - covering_fraction) * incident_escape_fraction * self.incident_continuum[line_id])
+
+        # Create and return a synthesizer.lines.Line object
+        return Line(line_id, wavelength, luminosity, continuum)
+
+    def get_line_collection(
+            self,
+            line_ids=None,
+            covering_fraction=1.0,
+            incident_escape_fraction=1.0,
+            ):
+        """
+        Returns the entire grid as a synthesizer.line.LineCollection object.
+
+        Args:
+            line_ids (tuple)
+                A tuple of line_ids.
+            covering_fraction (float)
+                The covering fraction of ionising photons. This scales the line
+                luminosities, nebular and transmitted continuum. The incident
+                continuum is scaled by 1 - covering_fraction.
+            incident_escape (float)
+                The fraction of the incident (or transmitted) that escapes. 
+                This is relevant for modelling e.g. the narrow-line region 
+                when the central emitting source is obscured meaning we 
+                only see the line emitting region.
+
+
+        Returns:
+            line_collection (synthesizer.line.LineCollection)
+                A synthesizer LineCollection object.
+        """
+        
+        if line_ids is None:
+            line_ids = self.lines
+
+        # Line dictionary
+        lines = {}
+
+        for line_id in line_ids:
+            line = self.get_line(
+                line_id,
+                covering_fraction=covering_fraction,
+                incident_escape_fraction=incident_escape_fraction,
+                )
+
+            # Add to dictionary
+            lines[line.id] = line
+
+        # Create and return synthesiszer.lines.LineCollection
+        return LineCollection(lines)
+
+    def get_line_at_grid_point(
+            self,
+            grid_point_,
+            line_id,
+            covering_fraction=1.0,
+            incident_escape_fraction=1.0,
+            ):
+        """
+        Function for creating a synthesizer Line object for a given line_id and
+        grid_point.
+
+        Args:
+            grid_point (tuple or dict)
+                A tuple of integers specifying the closest grid point or a
                 dictionary containing parameter values.
             line_id (str)
                 The id of the line.
+            covering_fraction (float)
+                The covering fraction of ionising photons. This scales the line
+                luminosities, nebular and transmitted continuum. The incident
+                continuum is scaled by 1 - covering_fraction.
+            incident_escape_fraction (float)
+                The fraction of the incident (or transmitted) that escapes. 
+                This is relevant for modelling e.g. the narrow-line region 
+                when the central emitting source is obscured meaning we 
+                only see the line emitting region.
+
 
         Returns:
             line (synthesizer.line.Line)
@@ -262,12 +397,24 @@ class Grid:
                 "Provided line_id is" "not in list of available lines."
             )
 
-        luminosity = self.luminosity[line_id][grid_point]
-        wavelength = self.wavelengths[line_id]
+        wavelength = self.wavelength[line_id]
+        luminosity = (covering_fraction *
+                      self.luminosity[line_id][grid_point])
+        # the transmitted continuum is unaffected by the escape fraction
+        continuum = (
+            covering_fraction * self.nebular_continuum[line_id][grid_point] +
+            covering_fraction * incident_escape_fraction * self.transmitted_continuum[line_id][grid_point] +
+            (1.0 - covering_fraction) * incident_escape_fraction * self.incident_continuum[line_id][grid_point])
 
-        return Line(line_id, wavelength, luminosity)
+        return Line(line_id, wavelength, luminosity, continuum)
 
-    def get_line_collection(self, grid_point_, line_ids=None):
+    def get_line_collection_at_grid_point(
+            self,
+            grid_point_,
+            line_ids=None,
+            covering_fraction=1.0,
+            incident_escape_fraction=1.0
+            ):
         """
         Function for creating a Line object for a given line_id and grid_point.
 
@@ -275,13 +422,25 @@ class Grid:
             grid_point (tuple)
                 A tuple of integers specifying the closest grid point.
             line_id (str)
-                The id of the line. If None use all available lines.
+                The id of the lines to extract. If None use all available 
+                lines.
+            covering_fraction (float)
+                The covering fraction of ionising photons. This scales the line
+                luminosities, nebular and transmitted continuum. The incident
+                continuum is scaled by 1 - covering_fraction.
+            incident_escape_fraction (float)
+                The fraction of the incident (or transmitted) that escapes. 
+                This is relevant for modelling e.g. the narrow-line region 
+                when the central emitting source is obscured meaning we 
+                only see the line emitting region.
+
 
         Returns:
             line_collection (synthesizer.line.LineCollection)
                 A synthesizer LineCollection object.
         """
         
+        # Check whether the grid point is a tuple or dictionary
         if isinstance(grid_point_, dict):
             grid_point = self.get_nearest_grid_point(grid_point_)
         if isinstance(grid_point_, tuple):
@@ -294,13 +453,17 @@ class Grid:
         lines = {}
 
         for line_id in line_ids:
-            line = self.get_line(grid_point, line_id)
+            line = self.get_line_at_grid_point(
+                grid_point,
+                line_id,
+                covering_fraction=covering_fraction,
+                incident_escape_fraction=incident_escape_fraction,
+                )
 
             # Add to dictionary
             lines[line.id] = line
 
         # Create and return collection
-
         line_collection = LineCollection(lines)
 
         return line_collection
@@ -354,7 +517,7 @@ class Grid:
             parameter_dict (dict)
                 A dictionary of parameter values to use.
             line_id (str)
-                The id of the line. 
+                The id of the line.
             log10 (list)
                 List of parameters to interpolate in logspace
 
@@ -380,7 +543,7 @@ class Grid:
         # calculate lumuinisity using interpolation
         luminosity = self.interpolator[line_id](point)
 
-        wavelength = self.wavelengths[line_id]
+        wavelength = self.wavelength[line_id]
 
         return Line(line_id, wavelength, luminosity[0])
 
@@ -416,61 +579,3 @@ class Grid:
         line_collection = LineCollection(lines)
 
         return line_collection
-
-    def flatten(self, lines=None):
-        """
-        Method for creating flattened versions for the axes and luminosities.
-
-        Args:
-            lines (list)
-                A list of lines to flatten, otherwise use all.
-
-        """
-
-        # if no lines are provided flatten all
-        if lines is None:
-            lines = self.lines
-
-        # Loop over lines and flatten the luminosities and equivalent widths 
-        # (if they exist).
-        self.luminosity_flattened = {}
-        for line in lines:
-            self.luminosity_flattened[line] = self.luminosity[line].flatten()
-
-        self.equivalent_widths_flattened = {}
-        if self.equivalent_widths:
-            for line in lines:
-                self.equivalent_widths_flattened[line] = self.equivalent_widths[line].flatten()
-
-        # flatten the axes
-        axes_values_tuple = (self.axes_values[axis] for axis in self.axes)
-
-        axes_values_mesh_tuple = np.meshgrid(*axes_values_tuple, indexing='ij')
-
-        self.axes_values_flattened = {
-            axis: axes_values_mesh_tuple[axis_index].flatten()
-            for axis_index, axis in enumerate(self.axes)}
-
-        # flatten the list of failed models
-        self.failed_models_flattened = self.failed_models.flatten()
-
-    def calculate_equivalent_widths(self, escape_fraction=0.0):
-        """
-        Method for to calculate the equivalent widths for the grid.
-
-        Args:
-            escape_fraction (float)
-                The nebular escape fraction.
-
-        Returns:
-            equivalent_widths (dict)
-                A dictionary of equivalent widths assuming the provided escape fraction.
-
-        """
-        self.equivalent_widths = {}
-        for line in self.lines:
-            line_luminosity = (1 - escape_fraction) * self.luminosity[line]
-            continuum = (c/self.wavelengths[line]**2) * ((1-escape_fraction) * self.nebular_continuum[line] + self.transmitted_continuum[line])
-            self.equivalent_widths[line] = (line_luminosity / continuum)
-
-        return self.equivalent_widths
